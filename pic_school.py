@@ -1,7 +1,8 @@
-import requests  # 导入requests库用于发送HTTP请求
 import base64  # 导入base64库用于解码图像数据
-from datetime import datetime  # 导入datetime库获取当前日期时间
 import os  # 导入os库用于操作文件和目录
+from datetime import datetime  # 导入datetime库获取当前日期时间
+
+import requests  # 导入requests库用于发送HTTP请求
 
 
 def pic(prompt, url="http://59.78.189.139:8081", steps=10,

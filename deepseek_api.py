@@ -5,10 +5,8 @@ import contextlib
 # for backward compatibility, you can still use `https://api.deepseek.com/v1` as `base_url`.
 client = OpenAI(api_key="sk-cbd03dd9233e47c29328e4d34f945fa5", base_url="https://api.deepseek.com/")
 
-messages = ({'role': 'system',
-            'content': '你是文字游戏的控制者，现在我在开车兜风，会遇到很多风景不同的岔路，岔路后面还会有岔路，每次遇到岔路你将给我选项1和选项2两个选项代表选择不同的岔路，接下来的风景要根据我的选择进行生成，每一段字数控制在50字以内。'},
-            {'role': 'user', 'content': '我开着车在沿海公路上疾驰。'},
-            {'role': 'user', 'content': '开始游戏'})
+messages = [{'role': 'system',
+            'content': '你是文字游戏的控制者，现在我在开车兜风，会遇到很多风景不同的岔路，岔路后面还会有岔路，每次遇到岔路你将给我选项1和选项2两个选项代表选择不同的岔路，接下来的风景要根据我的选择进行生成，每一段字数控制在50字以内。',}]
 def send_message_to_deepseek(userInput):
     chat_output = f"You: {userInput}\n"
     print(chat_output)

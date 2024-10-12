@@ -149,4 +149,4 @@ def gen_pic(desc):
         base64_to_image(imageBase, savePath)
         print("图片保存路径：" + savePath)
     # 保存到指定位置
-    return savePath
+    return "image/"+filename
