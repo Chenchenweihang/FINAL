@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"> <!-- 设置文档的字符编码为 UTF-8 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- 响应式设计，适应不同屏幕尺寸 -->
+    <title>Text Adventure Game with Image Generation</title> <!-- 页面标题 -->
+</head>
+
+<body>
+
+    <div style="text-align:left"> <!-- 包含输入和提交按钮的容器 -->
+        <div class="container"> <!-- 创建一个容器，用于包裹输入提示 -->
+            <label for="userInput"><strong id="inputPromptText">请输入“开始游戏”:</strong></label> <!-- 提示用户输入 -->
+        </div>
+        <input type="text" id="userInput" class="input1"> <!-- 用户输入框 -->
+        <button onclick="getUserInput()" class="button button1"><strong>提交</strong></button> <!-- 提交按钮，调用 getUserInput 函数 -->
+    </div>
+    <p id="textResponse"></p> <!-- 显示从服务器返回的响应文本 -->
+    <!--<p id="prompt"></p> -->  <!-- 可选的输出提示语的段落 -->
+    <div id="responseContainer" style="text-align:left" class="aiplayer"> <!-- 用于显示音频和图像的容器 -->
+        <audio id="generatedAudio" controls></audio> <!-- 音频播放控件 -->
+        <img id="generatedImage" src="" style="max-width: 100%; height: auto;text-align:center" alt="Generated Image"> <!-- 显示生成的图像 -->
+    </div>
+
+    <script>
+        var gameStarted = false; // 用于记录游戏是否已经开始
+
+        function getUserInput() {
+            var userInput = document.getElementById('userInput').value; // 获取用户输入
+            if (!userInput.trim()) { // 检查输入是否为空
+                alert("请输入有效的内容！"); // 提示用户输入有效内容
+                return;
+            }
+
+            if (!gameStarted) { // 如果游戏未开始，检查输入
+                if (userInput.trim() !== "开始游戏") { // 检查用户输入是否为“开始游戏”
+                    alert("请输入“开始游戏”来进入游戏"); // 提示用户输入正确的启动指令
+                    return;
+                }
+                gameStarted = true; // 设置游戏状态为已开始
+                document.getElementById('inputPromptText').innerText = "请输入指令或输入“结束”退出游戏:"; // 更新提示文本
+            }
+
+            if (userInput.trim() === "结束") { // 如果用户输入“结束”
+                document.getElementById('textResponse').innerText = "已结束游戏，无法继续使用输入框"; // 提示游戏已结束
+                document.getElementById('userInput').disabled = true; // 禁用输入框
+                document.getElementById('generatedImage').src = "https://wallpaperaccess.com/full/1114993.jpg"; // 显示游戏结束图像
+                return;
+            }
+
+            document.getElementById('userInput').value = '正在处理中，请稍等'; // 显示处理状态，清空输入框
+            fetch('/get_response', { // 向服务器发送请求
+                method: 'POST', // 请求方法为 POST
+                headers: {'Content-Type': 'application/json'}, // 请求头设置为 JSON 格式
+                body: JSON.stringify({ user_input: userInput }) // 将用户输入作为请求体发送
+            })
+            .then(response => response.json()) // 解析响应为 JSON 格式
+            .then(data => {
+                // 显示从后端获取的文本响应
+                document.getElementById('textResponse').innerText = "Response: " + data.chatgpt_response; // 显示响应文本
+                // 检查是否有有效的图片URL，如果有，显示图片
+                if(data.image_url && data.image_url !== 'None') { // 检查返回的图片 URL
+                    document.getElementById('generatedImage').src = data.image_url; // 设置图片源为返回的 URL
+                    document.getElementById('generatedImage').style.display = 'block'; // 显示图片
+                } else {
+                    document.getElementById('generatedImage').style.display = 'none'; // 隐藏图片
+                    alert("未能生成相关图片，请尝试其他输入。"); // 提示用户没有生成图片
+                }
+                if(data.audio_url && data.audio_url !== 'None') { // 检查是否有有效的音频 URL
+                    var audioPlayer = document.getElementById('generatedAudio'); // 获取音频播放控件
+                    audioPlayer.src = data.audio_url; // 设置音频源为返回的 URL
+                    audioPlayer.play(); // 播放音频e
+                }
+                document.getElementById('userInput').value = ''; // 清空输入框
+            })
+            .catch(error => {
+                console.error('Error:', error); // 打印错误信息到控制台
+                // 出现错误时，也清空输入框
+                document.getElementById('userInput').value = '出现错误，请检查'; // 提示用户出现错误
+            });
+        }
+    </script>
+</body>
+</html>
