@@ -1,6 +1,8 @@
 from flask import Flask, render_template, request, jsonify, url_for
 import os
 import openai
+
+import sund_api
 from word2picture import gen_pic
 from deepseek_api import send_message_to_deepseek
 
@@ -46,11 +48,20 @@ def get_response():
     # chat_history.append({"role": "assistant", "content": chatgpt_response})  # 将助手的响应添加到聊天历史中
 
     print(chatgpt_response)  # 打印GPT生成的响应以便于调试
+    # demo of response
+    # 你驶入一条蜿蜒的山路，前方出现两条岔路。
+    #
+    # 选项1：左转，进入一片茂密的森林。
+    # 选项2：右转，沿着山脊前行，视野开阔。
+
 
     # # 使用chatgpt_response生成音频文件并获取其路径
     # audio_file_path = speak_school(chatgpt_response)
     # audio_file_path = audio_file_path.replace("\\", "/")  # 替换文件路径中的反斜杠以兼容URL格式
     # audio_url = url_for('static', filename=audio_file_path, _external=True)  # 生成音频文件的URL
+    style = "happy"
+    audio_url = sund_api.get_sund_music(chatgpt_response,style)
+
 
     # 使用chatgpt_response生成图片文件并获取其路径
     image_file_path = gen_pic(chatgpt_response)
@@ -61,7 +72,7 @@ def get_response():
     response = {
         'chatgpt_response': chatgpt_response,  # GPT生成的文本响应
         'image_url': image_url,  # 图片文件的URL
-        # 'audio_url': audio_url  # 音频文件的URL
+        'audio_url': audio_url  # 音频文件的URL
     }
     return jsonify(response)  # 返回JSON格式的响应
 

@@ -84,8 +84,10 @@ def getBody(appid, text):
         "parameter": {
             "chat": {
                 "domain": "general",
-                "temperature": 0.5,
-                "max_tokens": 4096
+                "temperature": 0.75,
+                "max_tokens": 4096,
+                "width":512,
+                "height":512,
             }
         },
         "payload": {
@@ -93,7 +95,7 @@ def getBody(appid, text):
                 "text": [
                     {
                         "role": "user",
-                        "content": text
+                        "content": '请根据一下内容在图片中为我准确生成两个选项中的内容'+text
                     }
                 ]
             }
@@ -132,7 +134,7 @@ def gen_pic(desc):
     APPID = '1579d1b5'
     APISecret = 'ZDJlOWMzZDc3ZWNjM2U1YzUyOTVhOGJm'
     APIKEY = '4038eb2457f88e15b6ae1b5003069ea0'
-    print(desc)
+    # print(desc)
     res = main(desc, appid=APPID, apikey=APIKEY, apisecret=APISecret)
     data = json.loads(res)
     # print("data" + str(message))

@@ -1,7 +1,8 @@
 import requests
+from click import prompt
 
 
-def get_sund_music():
+def get_sund_music(text,style):
     url = "https://api.acedata.cloud/suno/audios"
 
     headers = {
@@ -13,7 +14,8 @@ def get_sund_music():
     payload = {
         "action": "generate",
         # 歌曲的提示词
-        "prompt": "A song for Christmas",
+        # "prompt": "A song for Christmas",
+        "prompt":text,
         "model": "chirp-v3-5",
         # 是否使用自定义歌词生成歌曲
         "custom": False,
@@ -21,11 +23,14 @@ def get_sund_music():
         "instrumental": True,
         "title": "ai_music",
         # 歌曲的风格
-        "style": "happy"
+        # "style": "happy"
+        "style":style
     }
 
-    response = requests.post(url, json=payload, headers=headers)
+    response = requests.post(url, json=payload, headers=headers, verify=False)
+    # /**
     # demo of response.json()
+    # **/
     # {
     #   "data": [
     #     {
@@ -55,6 +60,26 @@ def get_sund_music():
     #   ],
     #   "success": true
     # }
+
+    try:
+        response = requests.post(url, json=payload, headers=headers)
+        response.raise_for_status()  # 检查是否有请求错误
+        response_json = response.json()
+
+        if response_json.get('success'):
+            audio_url = response_json['data'][0]['audio_url']
+            print("Generated audio URL:", audio_url)
+            return audio_url
+        else:
+            print("Failed to generate music:", response_json)
+            return None
+
+    except requests.exceptions.RequestException as e:
+        print("Request failed:", e)
+        return None
+    except KeyError:
+        print("Unexpected response format:", response.text)
+        return None
 
     # 保存音频的地址
     audio_url = response.json()['data'][0]['audio_url']
