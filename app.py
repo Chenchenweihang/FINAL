@@ -39,26 +39,17 @@ def index():
 @app.route('/get_response', methods=['POST'])  # 定义处理POST请求的路由
 def get_response():
     user_input = request.json.get('user_input')  # 从请求中获取用户输入
-    # chat_history.append({"role": "user", "content": user_input})  # 将用户输入添加到聊天历史中
     print(user_input)  # 打印用户输入以便于调试
 
     chatgpt_response = send_message_to_deepseek(user_input)  # 生成GPT的响应
-    # chat_history.append({"role": "assistant", "content": chatgpt_response})  # 将助手的响应添加到聊天历史中
+    # 解析响应内容
+    description, option1, option2 = parse_response(chatgpt_response)  # {{ 新增代码：解析响应内容 }}
 
-    print(chatgpt_response)  # 打印GPT生成的响应以便于调试
-    # demo of response
-    # 你驶入一条蜿蜒的山路，前方出现两条岔路。
-    #
-    # 选项1：左转，进入一片茂密的森林。
-    # 选项2：右转，沿着山脊前行，视野开阔。
-
-
-    # # 使用chatgpt_response生成音频文件并获取其路径
+    # 使用chatgpt_response生成音频文件并获取其路径
+    style = "happy"
     # audio_file_path = speak_school(chatgpt_response)
     # audio_file_path = audio_file_path.replace("\\", "/")  # 替换文件路径中的反斜杠以兼容URL格式
     # audio_url = url_for('static', filename=audio_file_path, _external=True)  # 生成音频文件的URL
-    style = "happy"
-    # audio_url = sund_api.get_sund_music(chatgpt_response,style)
     audio_url = "static/audio/20241011155852.mp3"
 
 
@@ -69,11 +60,25 @@ def get_response():
 
     # 准备返回的响应内容
     response = {
-        'chatgpt_response': chatgpt_response,  # GPT生成的文本响应
-        'image_url': image_url,  # 图片文件的URL
-        'audio_url': audio_url  # 音频文件的URL
+        'description': description,  # {{ 修改：仅返回描述句子 }}
+        'option1': option1,          # {{ 新增：选项一的内容 }}
+        'option2': option2,          # {{ 新增：选项二的内容 }}
+        'image_url': image_url,      # 保持不变
+        'audio_url': audio_url       # 保持不变
     }
     return jsonify(response)  # 返回JSON格式的响应
+
+def parse_response(response_text):  # {{ 新增函数：解析响应内容 }}
+    lines = response_text.split('\n')
+    description = lines[0].strip().rstrip('。') if len(lines) > 0 else ''
+    option1 = ''
+    option2 = ''
+    for line in lines[1:]:
+        if line.startswith('选项一：'):
+            option1 = line.replace('选项一：', '').strip()
+        elif line.startswith('选项二：'):
+            option2 = line.replace('选项二：', '').strip()
+    return description, option1, option2
 
 if __name__ == "__main__":  # 当文件作为主程序运行时
     app.run(port=3000)  # 启动Flask应用，监听3000端口

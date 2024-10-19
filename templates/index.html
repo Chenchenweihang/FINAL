@@ -15,7 +15,7 @@
         }
 
         .container {
-            max-width: 600px;
+            max-width: 800px; /* 修改界面的最大宽度从600px增大到800px */
             margin: 50px auto;
             padding: 20px;
             background-color: #ffffff;
@@ -118,6 +118,11 @@
             background-position: center;
             position: relative;
         }
+
+        /* 新增容器样式（可选） */
+        .response-options-container {
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -131,15 +136,20 @@
     <!-- 用户输入指令的文本框 -->
     <input type="text" id="userInput" placeholder="请输入指令" class="el-input" disabled>
     <button class="button-option" onclick="getUserInput()" style="width: auto;"><strong>提交指令</strong></button>
-    <!-- 用户选择选项的按钮 -->
-    <div id="optionsContainer" style="display: none; margin-top: 20px;">
-        <button class="button-option" onclick="selectOption(1)" style="width: auto;"><strong>选项 1</strong></button>
-        <button class="button-option" onclick="selectOption(2)" style="width: auto;"><strong>选项 2</strong></button>
+    
+    <!-- 新建一个容器包含 textResponse 和 optionsContainer -->
+    <div class="response-options-container">
+        <div id="textResponse" class="container" style="display:none;"></div>
+        <!-- 用户选择选项的按钮，垂直排列 -->
+        <div id="optionsContainer" style="display: none; margin-top: 20px; display: flex; flex-direction: column;"> <!-- edit_1: 将容器设置为 flex 并垂直排列 -->
+            <button class="button-option" onclick="selectOption(1)" style="width: 100%; margin-bottom: 10px;"><strong>选项 1</strong></button> <!-- edit_2: 按钮宽度设为100%，并为第一个按钮添加下边距 -->
+            <button class="button-option" onclick="selectOption(2)" style="width: 100%;"><strong>选项 2</strong></button> <!-- edit_3: 按钮宽度设为100% -->
+        </div>
     </div>
+    
 </div>
 
 <!-- 等待服务器响应时的加载动画 -->
-<div id="textResponse" class="container" style="display:none;"></div>
 <div id="loading" class="loader" style="display:none;"></div>
 <!-- 生成的视频和图片响应容器 -->
 <div id="responseContainer" class="container" style="display: none; text-align: center;">
@@ -241,7 +251,11 @@
                 console.log('收到的数据:', data);
                 loadingDiv.style.display = 'none'; // 隐藏加载动画
                 textResponse.style.display = 'block'; // 显示文本响应
-                document.getElementById('textResponse').innerText = "Response: " + data.chatgpt_response; // 显示响应文本
+                document.getElementById('textResponse').innerText = data.description; // 修改：仅显示描述句子
+
+                // 动态设置按钮文本
+                document.querySelector('#optionsContainer button:nth-child(1) strong').innerText = data.option1;  // 设置选项一按钮文本
+                document.querySelector('#optionsContainer button:nth-child(2) strong').innerText = data.option2;  // 设置选项二按钮文本
 
                 // 处理图片
                 if (data.image_url && data.image_url !== 'None') {
