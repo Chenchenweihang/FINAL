@@ -1,11 +1,9 @@
 from flask import Flask, render_template, request, jsonify, url_for
 import os
-import openai
-
-import sund_api
+# import sund_api
 from word2picture import gen_pic
 from deepseek_api import send_message_to_deepseek
-
+#
 # 创建一个Flask应用实例
 app = Flask(__name__)
 
@@ -60,7 +58,8 @@ def get_response():
     # audio_file_path = audio_file_path.replace("\\", "/")  # 替换文件路径中的反斜杠以兼容URL格式
     # audio_url = url_for('static', filename=audio_file_path, _external=True)  # 生成音频文件的URL
     style = "happy"
-    audio_url = sund_api.get_sund_music(chatgpt_response,style)
+    # audio_url = sund_api.get_sund_music(chatgpt_response,style)
+    audio_url = "static/audio/20241011155852.mp3"
 
 
     # 使用chatgpt_response生成图片文件并获取其路径

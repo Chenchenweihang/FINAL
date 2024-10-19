@@ -13,6 +13,7 @@
             margin: 0;
             padding: 0;
         }
+
         .container {
             max-width: 600px;
             margin: 50px auto;
@@ -21,6 +22,7 @@
             border-radius: 8px;
             box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
         }
+
         .el-input {
             width: 100%;
             padding: 8px 12px;
@@ -33,17 +35,20 @@
             border-radius: 4px;
             box-sizing: border-box;
             margin-bottom: 20px;
-            transition: border-color .2s cubic-bezier(.645,.045,.355,1),box-shadow .2s cubic-bezier(.645,.045,.355,1);
+            transition: border-color .2s cubic-bezier(.645, .045, .355, 1), box-shadow .2s cubic-bezier(.645, .045, .355, 1);
         }
+
         .el-input:focus {
             border-color: #409EFF;
             outline: 0;
-            box-shadow: 0 0 5px rgba(64,158,255,.2);
+            box-shadow: 0 0 5px rgba(64, 158, 255, .2);
         }
+
         .el-button {
             width: 100%;
             margin-top: 10px;
         }
+
         .loader {
             border: 16px solid #f3f3f3;
             border-top: 16px solid #3498db;
@@ -56,9 +61,14 @@
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
         }
+
         .button-option {
             margin: 10px;
             padding: 10px 20px;
@@ -69,14 +79,17 @@
             border-radius: 5px;
             cursor: pointer;
         }
+
         .button-option:hover {
             background-color: #66b1ff;
         }
+
         .control-buttons {
             display: flex;
             justify-content: space-between;
             margin-bottom: 20px;
         }
+
         /* 新增的样式 */
         .audio-container {
             position: relative;
@@ -109,118 +122,117 @@
 </head>
 <body>
 
-    <div class="container">
-        <!-- 游戏开始和结束按钮 -->
-        <div class="control-buttons">
-            <button class="button-option" onclick="startGame()" id="startButton"><strong>开始游戏</strong></button>
-            <button class="button-option" onclick="endGame()"><strong>结束游戏</strong></button>
-        </div>
-        <!-- 用户输入指令的文本框 -->
-        <input type="text" id="userInput" placeholder="请输入指令" class="el-input" disabled>
-        <button class="button-option" onclick="getUserInput()" style="width: auto;"><strong>提交指令</strong></button>
-        <!-- 用户选择选项的按钮 -->
-        <div id="optionsContainer" style="display: none; margin-top: 20px;">
-            <button class="button-option" onclick="selectOption(1)" style="width: auto;"><strong>选项 1</strong></button>
-            <button class="button-option" onclick="selectOption(2)" style="width: auto;"><strong>选项 2</strong></button>
-        </div>
+<div class="container">
+    <!-- 游戏开始和结束按钮 -->
+    <div class="control-buttons">
+        <button class="button-option" onclick="startGame()" id="startButton"><strong>开始游戏</strong></button>
+        <button class="button-option" onclick="endGame()"><strong>结束游戏</strong></button>
     </div>
-
-    <!-- 等待服务器响应时的加载动画 -->
-    <div id="loading" class="loader" style="display:none;"></div>
-    <div id="textResponse" class="container" style="display:none;"></div>
-    <!-- 生成的视频和图片响应容器 -->
-    <div id="responseContainer" class="container" style="display: none; text-align: center;">
-        <div class="audio-container" id="audioContainer" style="display: none;">
-            <audio id="generatedAudio" controls>
-                <source src="" type="audio/mp3">
-                Your browser does not support the audio element.
-            </audio>
-        </div>
-        <video id="generatedVideo" controls style="width: 100%; height: auto; margin-top: 20px;"></video>
-        <img id="generatedImage" src="" style="max-width: 100%; height: auto; margin-top: 20px;" alt="Generated Image">
+    <!-- 用户输入指令的文本框 -->
+    <input type="text" id="userInput" placeholder="请输入指令" class="el-input" disabled>
+    <button class="button-option" onclick="getUserInput()" style="width: auto;"><strong>提交指令</strong></button>
+    <!-- 用户选择选项的按钮 -->
+    <div id="optionsContainer" style="display: none; margin-top: 20px;">
+        <button class="button-option" onclick="selectOption(1)" style="width: auto;"><strong>选项 1</strong></button>
+        <button class="button-option" onclick="selectOption(2)" style="width: auto;"><strong>选项 2</strong></button>
     </div>
+</div>
 
-    <script>
-        var gameStarted = false; // 标志游戏是否已经开始
+<!-- 等待服务器响应时的加载动画 -->
+<div id="textResponse" class="container" style="display:none;"></div>
+<div id="loading" class="loader" style="display:none;"></div>
+<!-- 生成的视频和图片响应容器 -->
+<div id="responseContainer" class="container" style="display: none; text-align: center;">
+    <div class="audio-container" id="audioContainer" style="display: none;">
+        <audio id="generatedAudio" controls>
+            <source src="" type="audio/mp3">
+            Your browser does not support the audio element.
+        </audio>
+    </div>
+    <video id="generatedVideo" controls style="width: 100%; height: auto; margin-top: 20px;"></video>
+    <!--        <img id="generatedImage" src="" style="max-width: 100%; height: auto; margin-top: 20px;" alt="Generated Image">-->
+</div>
 
-        // 启动游戏的函数
-        function startGame() {
-            document.getElementById('startButton').disabled = true;
-            document.getElementById('startButton').style.backgroundColor = '#b0c4de'; // 修改按钮样式表示禁用
-            document.getElementById('textResponse').innerText = '';
-            document.getElementById('textResponse').style.display = 'none';
-            document.getElementById('responseContainer').style.display = 'none';
-            document.getElementById('generatedVideo').src = '';
-            document.getElementById('generatedImage').src = '';
-            document.getElementById('generatedAudio').src = '';
-            console.log('游戏已开始');
-            gameStarted = true;
-            document.getElementById('userInput').disabled = false; // 启用用户输入框
-            document.getElementById('optionsContainer').style.display = 'block'; // 显示选项按钮
-            document.getElementById('textResponse').innerText = '欢迎来到冒险游戏！请在输入框中输入您的第一个指令，例如“向前走”或“探索周围”。';
-            document.getElementById('textResponse').style.display = 'block';
+<script>
+    var gameStarted = false; // 标志游戏是否已经开始
 
-            // 添加回车键监听事件
-            document.getElementById('userInput').addEventListener('keydown', function (event) {
-                if (event.key === 'Enter') {
-                    getUserInput();
-                }
-            });
+    // 启动游戏的函数
+    function startGame() {
+        document.getElementById('startButton').disabled = true;
+        document.getElementById('startButton').style.backgroundColor = '#b0c4de'; // 修改按钮样式表示禁用
+        document.getElementById('textResponse').innerText = '';
+        document.getElementById('textResponse').style.display = 'none';
+        document.getElementById('responseContainer').style.display = 'none';
+        document.getElementById('generatedVideo').src = '';
+        // document.getElementById('generatedImage').src = '';
+        document.getElementById('generatedAudio').src = '';
+        console.log('游戏已开始');
+        gameStarted = true;
+        document.getElementById('userInput').disabled = false; // 启用用户输入框
+        document.getElementById('optionsContainer').style.display = 'block'; // 显示选项按钮
+        document.getElementById('textResponse').innerText = '欢迎来到冒险游戏！请在输入框中输入您的第一个指令，例如“向前走”或“探索周围”。';
+        document.getElementById('textResponse').style.display = 'block';
+
+        // 添加回车键监听事件
+        document.getElementById('userInput').addEventListener('keydown', function (event) {
+            if (event.key === 'Enter') {
+                getUserInput();
+            }
+        });
+    }
+
+    // 结束游戏的函数
+    function endGame() {
+        document.getElementById('startButton').disabled = false;
+        document.getElementById('startButton').style.backgroundColor = '#409EFF'; // 恢复按钮样式表示启用
+        console.log('游戏已结束');
+        gameStarted = false;
+        document.getElementById('userInput').disabled = true; // 禁用用户输入框
+        document.getElementById('optionsContainer').style.display = 'none'; // 隐藏选项按钮
+        // document.getElementById('generatedImage').src = "https://wallpaperaccess.com/full/1114993.jpg"; // 设置游戏结束时显示的图片
+        // 如果需要在游戏结束时显示音频，可以在这里添加
+    }
+
+    // 处理用户输入的函数
+    function getUserInput() {
+        if (!gameStarted) {
+            console.log('在游戏开始前尝试获取用户输入');
+            alert("请先点击开始游戏按钮来开始游戏");
+            return;
         }
 
-        // 结束游戏的函数
-        function endGame() {
-            document.getElementById('startButton').disabled = false;
-            document.getElementById('startButton').style.backgroundColor = '#409EFF'; // 恢复按钮样式表示启用
-            console.log('游戏已结束');
-            gameStarted = false;
-            document.getElementById('userInput').disabled = true; // 禁用用户输入框
-            document.getElementById('optionsContainer').style.display = 'none'; // 隐藏选项按钮
-            document.getElementById('generatedImage').src = "https://wallpaperaccess.com/full/1114993.jpg"; // 设置游戏结束时显示的图片
-            // 如果需要在游戏结束时显示音频，可以在这里添加
+        var loadingDiv = document.getElementById('loading');
+        var userInputField = document.getElementById('userInput');
+        var userInput = userInputField.value.trim().toLowerCase(); // 获取并修剪用户输入，将其转换为小写
+        var textResponse = document.getElementById('textResponse');
+        var responseContainer = document.getElementById('responseContainer');
+
+        console.log('用户输入:', userInput);
+
+        if (!userInput) { // 如果未提供输入，提示用户
+            console.log('未提供输入');
+            alert("请输入有效的内容！");
+            return;
         }
 
-        // 处理用户输入的函数
-        function getUserInput() {
-            if (!gameStarted) {
-                console.log('在游戏开始前尝试获取用户输入');
-                alert("请先点击开始游戏按钮来开始游戏");
-                return;
-            }
+        if (userInput === "结束") { // 如果用户输入“结束”，结束游戏
+            console.log('用户请求结束游戏');
+            endGame();
+            return;
+        }
 
-            var loadingDiv = document.getElementById('loading');
-            var userInputField = document.getElementById('userInput');
-            var userInput = userInputField.value.trim().toLowerCase(); // 获取并修剪用户输入，将其转换为小写
-            var textResponse = document.getElementById('textResponse');
-            var responseContainer = document.getElementById('responseContainer');
+        userInputField.value = '正在处理中，请稍等'; // 设置用户输入框显示处理中状态
+        userInputField.disabled = true; // 在处理中禁用输入框
+        responseContainer.style.display = 'none'; // 隐藏响应容器
+        loadingDiv.style.display = 'block'; // 显示加载动画
 
-            console.log('用户输入:', userInput);
-
-            if (!userInput) { // 如果未提供输入，提示用户
-                console.log('未提供输入');
-                alert("请输入有效的内容！");
-                return;
-            }
-
-            if (userInput === "结束") { // 如果用户输入“结束”，结束游戏
-                console.log('用户请求结束游戏');
-                endGame();
-                return;
-            }
-
-            userInputField.value = '正在处理中，请稍等'; // 设置用户输入框显示处理中状态
-            userInputField.disabled = true; // 在处理中禁用输入框
-            responseContainer.style.display = 'none'; // 隐藏响应容器
-            textResponse.style.display = 'none'; // 隐藏文本响应
-            loadingDiv.style.display = 'block'; // 显示加载动画
-
-            console.log('从服务器获取响应');
-            // 将用户输入发送到服务器进行处理
-            fetch('/get_response', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ user_input: userInput })
-            })
+        console.log('从服务器获取响应');
+        // 将用户输入发送到服务器进行处理
+        fetch('/get_response', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({user_input: userInput})
+        })
             .then(response => {
                 console.log('从服务器收到响应');
                 return response.json();
@@ -234,11 +246,11 @@
                 // 处理图片
                 if (data.image_url && data.image_url !== 'None') {
                     console.log('找到图片 URL:', data.image_url);
-                    document.getElementById('generatedImage').src = data.image_url;
-                    document.getElementById('generatedImage').style.display = 'block';
+                    // document.getElementById('generatedImage').src = data.image_url;
+                    // document.getElementById('generatedImage').style.display = 'block';
                 } else {
                     console.log('未找到有效的图片 URL');
-                    document.getElementById('generatedImage').style.display = 'none';
+                    // document.getElementById('generatedImage').style.display = 'none';
                 }
 
                 // 处理视频
@@ -276,15 +288,15 @@
                 userInputField.value = ''; // 恢复输入框为空
                 alert('出现错误，请检查'); // 提示用户出现错误
             });
-        }
+    }
 
-        // 处理用户选择选项的函数
-        function selectOption(optionNumber) {
-            console.log('选项已选择:', optionNumber);
-            var userInput = optionNumber === 1 ? '选择了选项 1' : '选择了选项 2'; // 根据选择的选项设置用户输入
-            document.getElementById('userInput').value = userInput; // 设置用户输入框的值
-            getUserInput(); // 将选择的选项作为用户输入进行处理
-        }
-    </script>
+    // 处理用户选择选项的函数
+    function selectOption(optionNumber) {
+        console.log('选项已选择:', optionNumber);
+        var userInput = optionNumber === 1 ? '选择了选项 1' : '选择了选项 2'; // 根据选择的选项设置用户输入
+        document.getElementById('userInput').value = userInput; // 设置用户输入框的值
+        getUserInput(); // 将选择的选项作为用户输入进行处理
+    }
+</script>
 </body>
 </html>
