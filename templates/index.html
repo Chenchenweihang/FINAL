@@ -15,7 +15,7 @@
         }
 
         .container {
-            max-width: 800px; /* 修改界面的最大宽度从600px增大到800px */
+            max-width: 2000px; /* 修改界面的最大宽度从600px增大到800px */
             margin: 50px auto;
             padding: 20px;
             background-color: #ffffff;
@@ -93,8 +93,8 @@
         /* 新增的样式 */
         .audio-container {
             position: relative;
-            width: 100%;
-            height: 300px; /* 根据需要调整高度 */
+            width: 2000px;
+            height: 2000px; /* 根据需要调整高度 */
             background-size: cover;
             background-position: center;
             border: 1px solid #ccc;
@@ -159,7 +159,7 @@
             Your browser does not support the audio element.
         </audio>
     </div>
-    <video id="generatedVideo" controls style="width: 100%; height: auto; margin-top: 20px;"></video>
+<!--    <video id="generatedVideo" controls style="width: 100%; height: auto; margin-top: 20px;"></video>-->
     <!--        <img id="generatedImage" src="" style="max-width: 100%; height: auto; margin-top: 20px;" alt="Generated Image">-->
 </div>
 
@@ -169,19 +169,19 @@
     // 启动游戏的函数
     function startGame() {
         document.getElementById('startButton').disabled = true;
-        document.getElementById('startButton').style.backgroundColor = '#b0c4de'; // 修改按钮样式表示禁用
+        document.getElementById('startButton').style.backgroundColor = '#b0c4de';
         document.getElementById('textResponse').innerText = '';
         document.getElementById('textResponse').style.display = 'none';
         document.getElementById('responseContainer').style.display = 'none';
-        document.getElementById('generatedVideo').src = '';
-        // document.getElementById('generatedImage').src = '';
+        // document.getElementById('generatedVideo').src = '';
         document.getElementById('generatedAudio').src = '';
         console.log('游戏已开始');
         gameStarted = true;
-        document.getElementById('userInput').disabled = false; // 启用用户输入框
-        document.getElementById('optionsContainer').style.display = 'block'; // 显示选项按钮
-        document.getElementById('textResponse').innerText = '欢迎来到冒险游戏！请在输入框中输入您的第一个指令，例如“向前走”或“探索周围”。';
-        document.getElementById('textResponse').style.display = 'block';
+        document.getElementById('userInput').disabled = false;
+        document.getElementById('optionsContainer').style.display = 'block';
+
+        // 移除静态欢迎消息，改为自动触发初始请求
+        getUserInput('欢迎来到冒险游戏！');
 
         // 添加回车键监听事件
         document.getElementById('userInput').addEventListener('keydown', function (event) {
@@ -204,7 +204,7 @@
     }
 
     // 处理用户输入的函数
-    function getUserInput() {
+    function getUserInput(initialInput) {
         if (!gameStarted) {
             console.log('在游戏开始前尝试获取用户输入');
             alert("请先点击开始游戏按钮来开始游戏");
@@ -213,95 +213,93 @@
 
         var loadingDiv = document.getElementById('loading');
         var userInputField = document.getElementById('userInput');
-        var userInput = userInputField.value.trim().toLowerCase(); // 获取并修剪用户输入，将其转换为小写
+        var userInput = initialInput || userInputField.value.trim().toLowerCase();
         var textResponse = document.getElementById('textResponse');
         var responseContainer = document.getElementById('responseContainer');
 
         console.log('用户输入:', userInput);
 
-        if (!userInput) { // 如果未提供输入，提示用户
+        if (!userInput && !initialInput) {
             console.log('未提供输入');
             alert("请输入有效的内容！");
             return;
         }
 
-        if (userInput === "结束") { // 如果用户输入“结束”，结束游戏
+        if (userInput === "结束") {
             console.log('用户请求结束游戏');
             endGame();
             return;
         }
 
-        userInputField.value = '正在处理中，请稍等'; // 设置用户输入框显示处理中状态
-        userInputField.disabled = true; // 在处理中禁用输入框
-        responseContainer.style.display = 'none'; // 隐藏响应容器
-        loadingDiv.style.display = 'block'; // 显示加载动画
+        userInputField.value = '正在处理中，请稍等';
+        userInputField.disabled = true;
+        responseContainer.style.display = 'none';
+        loadingDiv.style.display = 'block';
 
         console.log('从服务器获取响应');
-        // 将用户输入发送到服务器进行处理
-        fetch('/get_response', {
+        fetch('/get_text_response', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({user_input: userInput})
         })
-            .then(response => {
-                console.log('从服务器收到响应');
-                return response.json();
-            })
-            .then(data => {
-                console.log('收到的数据:', data);
-                loadingDiv.style.display = 'none'; // 隐藏加载动画
-                textResponse.style.display = 'block'; // 显示文本响应
-                document.getElementById('textResponse').innerText = data.description; // 修改：仅显示描述句子
+        .then(response => response.json())
+        .then(data => {
+            console.log('收到文本数据:', data);
+            textResponse.style.display = 'block';
+            document.getElementById('textResponse').innerText = data.description;
 
-                // 动态设置按钮文本
-                document.querySelector('#optionsContainer button:nth-child(1) strong').innerText = data.option1;  // 设置选项一按钮文本
-                document.querySelector('#optionsContainer button:nth-child(2) strong').innerText = data.option2;  // 设置选项二按钮文本
+            document.querySelector('#optionsContainer button:nth-child(1) strong').innerText = data.option1;
+            document.querySelector('#optionsContainer button:nth-child(2) strong').innerText = data.option2;
 
-                // 处理图片
-                if (data.image_url && data.image_url !== 'None') {
-                    console.log('找到图片 URL:', data.image_url);
-                    // document.getElementById('generatedImage').src = data.image_url;
-                    // document.getElementById('generatedImage').style.display = 'block';
-                } else {
-                    console.log('未找到有效的图片 URL');
-                    // document.getElementById('generatedImage').style.display = 'none';
+            // 同时请求图片和音频
+            Promise.all([
+                fetch('/get_image', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({prompt: data.description})
+                }),
+                fetch('/get_audio', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({prompt: data.description})
+                })
+            ])
+            .then(([imageResponse, audioResponse]) => 
+                Promise.all([imageResponse.json(), audioResponse.json()])
+            )
+            .then(([imageData, audioData]) => {
+                console.log('收到图片数据:', imageData);
+                console.log('收到音频数据:', audioData);
+
+                if (imageData.image_url && imageData.image_url !== 'None') {
+                    document.getElementById('audioContainer').style.backgroundImage = `url(${imageData.image_url})`;
+                    document.getElementById('audioContainer').style.display = 'block';
                 }
 
-                // 处理视频
-                if (data.video_url && data.video_url !== 'None') {
-                    console.log('找到视频 URL:', data.video_url);
-                    var videoPlayer = document.getElementById('generatedVideo');
-                    videoPlayer.src = data.video_url;
-                    videoPlayer.style.display = 'block';
-                    videoPlayer.play();
-                } else {
-                    console.log('未找到有效的视频 URL');
-                    document.getElementById('generatedVideo').style.display = 'none';
-                }
-
-                // 处理音频
-                if (data.audio_url && data.audio_url !== 'None') {
-                    console.log('找到音频 URL:', data.audio_url);
+                if (audioData.audio_url && audioData.audio_url !== 'None') {
                     var audioPlayer = document.getElementById('generatedAudio');
-                    audioPlayer.src = data.audio_url;
-                    document.getElementById('audioContainer').style.backgroundImage = `url(${data.image_url})`; // 使用图片作为背景
-                    document.getElementById('audioContainer').style.display = 'block';
-                } else {
-                    console.log('未找到有效的音频 URL');
+                    audioPlayer.src = audioData.audio_url;
                     document.getElementById('audioContainer').style.display = 'block';
                 }
 
-                responseContainer.style.display = 'block'; // 显示响应容器
-                userInputField.value = ''; // 清空用户输入框
-                userInputField.disabled = false; // 重新启用用户输入框
+                loadingDiv.style.display = 'none';
+                responseContainer.style.display = 'block';
             })
             .catch(error => {
-                console.error('错误:', error); // 记录错误信息
-                loadingDiv.style.display = 'none'; // 隐藏加载动画
-                userInputField.disabled = false; // 在发生错误时重新启用输入框
-                userInputField.value = ''; // 恢复输入框为空
-                alert('出现错误，请检查'); // 提示用户出现错误
+                console.error('获取图片或音频时出错:', error);
+                loadingDiv.style.display = 'none';
             });
+
+            userInputField.value = '';
+            userInputField.disabled = false;
+        })
+        .catch(error => {
+            console.error('获取文本响应时出错:', error);
+            loadingDiv.style.display = 'none';
+            userInputField.disabled = false;
+            userInputField.value = '';
+            alert('出现错误，请检查');
+        });
     }
 
     // 处理用户选择选项的函数

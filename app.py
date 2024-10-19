@@ -1,9 +1,9 @@
 from flask import Flask, render_template, request, jsonify, url_for
 import os
-# import sund_api
 from word2picture import gen_pic
 from deepseek_api import send_message_to_deepseek
-#
+import threading
+
 # 创建一个Flask应用实例
 app = Flask(__name__)
 
@@ -36,37 +36,37 @@ app.config['STATIC_FOLDER'] = os.path.join(os.path.dirname(os.path.abspath(__fil
 def index():
     return render_template('index.html')  # 渲染index.html模板页面
 
-@app.route('/get_response', methods=['POST'])  # 定义处理POST请求的路由
-def get_response():
-    user_input = request.json.get('user_input')  # 从请求中获取用户输入
-    print(user_input)  # 打印用户输入以便于调试
+@app.route('/get_text_response', methods=['POST'])
+def get_text_response():
+    user_input = request.json.get('user_input')
+    print(user_input)
 
-    chatgpt_response = send_message_to_deepseek(user_input)  # 生成GPT的响应
-    # 解析响应内容
-    description, option1, option2 = parse_response(chatgpt_response)  # {{ 新增代码：解析响应内容 }}
+    chatgpt_response = send_message_to_deepseek(user_input)
+    description, option1, option2 = parse_response(chatgpt_response)
 
-    # 使用chatgpt_response生成音频文件并获取其路径
-    style = "happy"
-    # audio_file_path = speak_school(chatgpt_response)
-    # audio_file_path = audio_file_path.replace("\\", "/")  # 替换文件路径中的反斜杠以兼容URL格式
-    # audio_url = url_for('static', filename=audio_file_path, _external=True)  # 生成音频文件的URL
+    response = {
+        'description': description,
+        'option1': option1,
+        'option2': option2
+    }
+    return jsonify(response)
+
+@app.route('/get_image', methods=['POST'])
+def get_image():
+    prompt = request.json.get('prompt')
+    image_file_path = gen_pic(prompt)
+    image_file_path = image_file_path.replace("\\", "/")
+    image_url = url_for('static', filename=image_file_path, _external=True)
+
+    return jsonify({'image_url': image_url})
+
+@app.route('/get_audio', methods=['POST'])
+def get_audio():
+    prompt = request.json.get('prompt')
+    # 这里应该是生成音频的代码，现在只是返回一个固定的音频URL
     audio_url = "static/audio/20241011155852.mp3"
 
-
-    # 使用chatgpt_response生成图片文件并获取其路径
-    image_file_path = gen_pic(chatgpt_response)
-    image_file_path = image_file_path.replace("\\", "/")  # 替换文件路径中的反斜杠以兼容URL格式
-    image_url = url_for('static',filename=image_file_path, _external=True)  # 生成图片文件的URL
-
-    # 准备返回的响应内容
-    response = {
-        'description': description,  # {{ 修改：仅返回描述句子 }}
-        'option1': option1,          # {{ 新增：选项一的内容 }}
-        'option2': option2,          # {{ 新增：选项二的内容 }}
-        'image_url': image_url,      # 保持不变
-        'audio_url': audio_url       # 保持不变
-    }
-    return jsonify(response)  # 返回JSON格式的响应
+    return jsonify({'audio_url': audio_url})
 
 def parse_response(response_text):  # {{ 新增函数：解析响应内容 }}
     lines = response_text.split('\n')
