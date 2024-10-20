@@ -48,6 +48,7 @@
         }
 
         .left-container, .right-container {
+            height: 800px;
             background-color: #ffffff;
             border-radius: 8px;
             box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
@@ -153,6 +154,7 @@
         }
 
         #textResponse {
+            height: 100px;
             background-color: #f9f9f9;
             border: 1px solid #dcdfe6;
             border-radius: 5px;
@@ -173,6 +175,7 @@
 
         #optionsContainer .button-option {
             width: 100%;
+            height: 50px;
             max-width: 550px; /* 增大选项按钮宽度 */
         }
 
@@ -187,12 +190,17 @@
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         .right-container #loading {
             margin-top: 25px; /* 增加右侧加载器上方间距 */
+            margin: 0 auto;
         }
 
         .right-container #responseContainer {
@@ -256,11 +264,11 @@
 
         <!-- 响应和选项容器 -->
         <div class="response-options-container">
-            <div id="textResponse" style="display:none;"></div>
+            <div id="textResponse" style="display:block;"></div>
             <!-- 用户选择选项的按钮，垂直排列 -->
             <div id="optionsContainer" style="display: none;">
-                <button class="button-option" onclick="selectOption(1)"></button>
-                <button class="button-option" onclick="selectOption(2)"></button>
+                <button id="option1" class="button-option" onclick="selectOption(1)"></button>
+                <button id="option2" class="button-option" onclick="selectOption(2)"></button>
             </div>
         </div>
     </div>
@@ -299,13 +307,13 @@
         console.log('游戏已开始');
         gameStarted = true;
         document.getElementById('userInput').disabled = false;
-        document.getElementById('submitButton').disabled = false;
+        // document.getElementById('submitButton').disabled = false;
         document.getElementById('optionsContainer').style.display = 'flex';
         document.getElementById('optionsContainer').style.flexDirection = 'column';
         document.getElementById('generatedImage').style.display = 'none';
 
         // 自动触发初始请求
-        getUserInput('欢迎来到冒险游戏！开始的情景为：你驾驶着车，沿着蜿蜒的山路前行，两旁是茂密的森林，阳光透过树叶洒下斑驳的光影。');
+        getUserInput('欢迎来到冒险游戏！');
 
         // 添加回车键监听事件
         document.getElementById('userInput').addEventListener('keydown', handleUserInputEnter);
@@ -334,6 +342,7 @@
         document.getElementById('manualEndButton').disabled = true;
         console.log('游戏已结束');
         gameStarted = false;
+        document.getElementById('userInput').value = "停止探索，游戏结束";
         document.getElementById('userInput').disabled = true;
         document.getElementById('submitButton').disabled = true;
         document.getElementById('optionsContainer').style.display = 'none';
@@ -361,6 +370,9 @@
         var userInput = initialInput || userInputField.value.trim();
         var textResponse = document.getElementById('textResponse');
         var responseContainer = document.getElementById('responseContainer');
+        var submitButton = document.getElementById('submitButton');
+        var option1 = document.getElementById('option1');
+        var option2 = document.getElementById('option2');
 
         console.log('用户输入:', userInput);
 
@@ -375,18 +387,20 @@
             endGame();
             return;
         }
-
+        // 如果用户输入为空，则显示加载动画并禁用输入框
         if (!initialInput) {
             userInputField.value = '正在处理中，请稍等...';
             userInputField.disabled = true;
-            document.getElementById('submitButton').disabled = true;
+            submitButton.disabled = true;
         }
 
         responseContainer.style.display = 'none';
         loadingDiv.style.display = 'flex';
+        option1.disabled = true;
+        option2.disabled = true;
         console.log('从服务器获取响应');
 
-         fetch('/get_text_response', {
+        fetch('/get_text_response', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({user_input: userInput})
@@ -396,7 +410,7 @@
                 console.log('收到文本数据:', data);
 
                 // 检查是否收到结束游戏的信号
-                if (data.game_over) {
+                if (data.option1 == '') {
                     loadingDiv.style.display = 'none';
                     endGame();
                     return;
@@ -440,24 +454,30 @@
                         }
 
                         loadingDiv.style.display = 'none';
+                        option1.disabled = false;
+                        option2.disabled = false;
+                        submitButton.disabled = false;
+
                         responseContainer.style.display = 'flex';
                     })
                     .catch(error => {
                         console.error('获取图片或音频时出错:', error);
                         loadingDiv.style.display = 'none';
+                        option1.disabled = false;
+                        option2.disabled = false;
+                        submitButton.disabled = false;
+
                         alert('加载图片或音频时出错，请稍后再试。');
                     });
 
                 userInputField.value = '';
                 userInputField.disabled = false;
-                document.getElementById('submitButton').disabled = false;
             })
             .catch(error => {
                 console.error('获取文本响应时出错:', error);
                 loadingDiv.style.display = 'none';
                 userInputField.disabled = false;
                 userInputField.value = '';
-                document.getElementById('submitButton').disabled = false;
                 alert('出现错误，请稍后再试。');
             });
     }

@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, jsonify, url_for
 import os
 from word2picture import gen_pic
 from deepseek_api import send_message_to_deepseek, reset_messages  # 导入 reset_messages 函数
+from sund_api import get_sund_music
 import threading
 
 # 创建一个Flask应用实例
@@ -56,6 +57,7 @@ def get_audio():
     prompt = request.json.get('prompt')
     # 这里应该是生成音频的代码，现在只是返回一个固定的音频URL
     audio_url = "static/audio/20241011155852.mp3"
+    # audio_url = get_sund_music(prompt, '1')
 
     return jsonify({'audio_url': audio_url})
 
