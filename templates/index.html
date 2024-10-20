@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Text Adventure Game with Image Generation</title>
+    <title>文字冒险游戏与图片生成</title>
     <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
     <script src="https://unpkg.com/element-ui/lib/index.js"></script>
     <style>
+        /* 您现有的CSS样式保持不变 */
         body {
             font-family: "Helvetica Neue", Arial, sans-serif;
             background-color: #f5f5f5;
@@ -15,7 +16,7 @@
         }
 
         .container {
-            max-width: 2000px; /* 修改界面的最大宽度从600px增大到800px */
+            max-width: 2000px; /* 修改界面的最大宽度 */
             margin: 50px auto;
             padding: 20px;
             background-color: #ffffff;
@@ -131,22 +132,21 @@
     <!-- 游戏开始和结束按钮 -->
     <div class="control-buttons">
         <button class="button-option" onclick="startGame()" id="startButton"><strong>开始游戏</strong></button>
-        <button class="button-option" onclick="endGame()"><strong>结束游戏</strong></button>
+        <button class="button-option" onclick="endGame()" id="manualEndButton"><strong>结束游戏</strong></button>
     </div>
     <!-- 用户输入指令的文本框 -->
     <input type="text" id="userInput" placeholder="请输入指令" class="el-input" disabled>
     <button class="button-option" onclick="getUserInput()" style="width: auto;"><strong>提交指令</strong></button>
-    
+
     <!-- 新建一个容器包含 textResponse 和 optionsContainer -->
     <div class="response-options-container">
         <div id="textResponse" class="container" style="display:none;"></div>
         <!-- 用户选择选项的按钮，垂直排列 -->
-        <div id="optionsContainer" style="display: none; margin-top: 20px; display: flex; flex-direction: column;"> <!-- edit_1: 将容器设置为 flex 并垂直排列 -->
-            <button class="button-option" onclick="selectOption(1)" style="width: 100%; margin-bottom: 10px;"><strong>选项 1</strong></button> <!-- edit_2: 按钮宽度设为100%，并为第一个按钮添加下边距 -->
-            <button class="button-option" onclick="selectOption(2)" style="width: 100%;"><strong>选项 2</strong></button> <!-- edit_3: 按钮宽度设为100% -->
+        <div id="optionsContainer" style="display: none; margin-top: 20px; display: flex; flex-direction: column;">
+            <button class="button-option" onclick="selectOption(1)" style="width: 100%; margin-bottom: 10px;"><strong>选项 1</strong></button>
+            <button class="button-option" onclick="selectOption(2)" style="width: 100%;"><strong>选项 2</strong></button>
         </div>
     </div>
-    
 </div>
 
 <!-- 等待服务器响应时的加载动画 -->
@@ -155,12 +155,12 @@
 <div id="responseContainer" class="container" style="display: none; text-align: center;">
     <div class="audio-container" id="audioContainer" style="display: none;">
         <audio id="generatedAudio" controls>
-            <source src="" type="audio/mp3">
+            <source src="" type="audio/mp4">
             Your browser does not support the audio element.
         </audio>
     </div>
-<!--    <video id="generatedVideo" controls style="width: 100%; height: auto; margin-top: 20px;"></video>-->
-    <!--        <img id="generatedImage" src="" style="max-width: 100%; height: auto; margin-top: 20px;" alt="Generated Image">-->
+    <!-- <video id="generatedVideo" controls style="width: 100%; height: auto; margin-top: 20px;"></video> -->
+    <img id="generatedImage" src="" style="max-width: 100%; height: auto; margin-top: 20px; display: none;" alt="Generated Image">
 </div>
 
 <script>
@@ -179,27 +179,45 @@
         gameStarted = true;
         document.getElementById('userInput').disabled = false;
         document.getElementById('optionsContainer').style.display = 'block';
+        document.getElementById('generatedImage').style.display = 'none'; // 隐藏图片响应
 
         // 移除静态欢迎消息，改为自动触发初始请求
-        getUserInput('欢迎来到冒险游戏！');
+        getUserInput('欢迎来到冒险游戏！开始的情景为：你驾驶着车，沿着蜿蜒的山路前行，两旁是茂密的森林，阳光透过树叶洒下斑驳的光影。请回复我同样的描述文本');
 
         // 添加回车键监听事件
         document.getElementById('userInput').addEventListener('keydown', function (event) {
             if (event.key === 'Enter') {
-                getUserInput();
+            getUserInput();
             }
         });
     }
 
     // 结束游戏的函数
     function endGame() {
+        // 发送请求到后端，清空 messages
+        fetch('/end_game', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data.message);
+            })
+            .catch(error => {
+                console.error('结束游戏时出错:', error);
+            });
+
+        // 进行前端的游戏结束处理
         document.getElementById('startButton').disabled = false;
         document.getElementById('startButton').style.backgroundColor = '#409EFF'; // 恢复按钮样式表示启用
         console.log('游戏已结束');
         gameStarted = false;
         document.getElementById('userInput').disabled = true; // 禁用用户输入框
         document.getElementById('optionsContainer').style.display = 'none'; // 隐藏选项按钮
-        // document.getElementById('generatedImage').src = "https://wallpaperaccess.com/full/1114993.jpg"; // 设置游戏结束时显示的图片
+        document.getElementById('textResponse').innerText = ''; // 清空文本响应
+        document.getElementById('audioContainer').style.display = 'none'; // 隐藏音频响应
+        document.getElementById('generatedImage').style.display = 'block'; // 显示图片响应
+        document.getElementById('generatedImage').src = "https://wallpaperaccess.com/full/1114993.jpg"; // 设置游戏结束时显示的图片
         // 如果需要在游戏结束时显示音频，可以在这里添加
     }
 
@@ -213,7 +231,7 @@
 
         var loadingDiv = document.getElementById('loading');
         var userInputField = document.getElementById('userInput');
-        var userInput = initialInput || userInputField.value.trim().toLowerCase();
+        var userInput = initialInput || userInputField.value.trim();
         var textResponse = document.getElementById('textResponse');
         var responseContainer = document.getElementById('responseContainer');
 
@@ -225,7 +243,7 @@
             return;
         }
 
-        if (userInput === "结束") {
+        if (userInput.toLowerCase() === "结束") {
             console.log('用户请求结束游戏');
             endGame();
             return;
@@ -242,71 +260,84 @@
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({user_input: userInput})
         })
-        .then(response => response.json())
-        .then(data => {
-            console.log('收到文本数据:', data);
-            textResponse.style.display = 'block';
-            document.getElementById('textResponse').innerText = data.description;
+            .then(response => response.json())
+            .then(data => {
+                console.log('收到文本数据:', data);
 
-            document.querySelector('#optionsContainer button:nth-child(1) strong').innerText = data.option1;
-            document.querySelector('#optionsContainer button:nth-child(2) strong').innerText = data.option2;
-
-            // 同时请求图片和音频
-            Promise.all([
-                fetch('/get_image', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({prompt: data.description})
-                }),
-                fetch('/get_audio', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({prompt: data.description})
-                })
-            ])
-            .then(([imageResponse, audioResponse]) => 
-                Promise.all([imageResponse.json(), audioResponse.json()])
-            )
-            .then(([imageData, audioData]) => {
-                console.log('收到图片数据:', imageData);
-                console.log('收到音频数据:', audioData);
-
-                if (imageData.image_url && imageData.image_url !== 'None') {
-                    document.getElementById('audioContainer').style.backgroundImage = `url(${imageData.image_url})`;
-                    document.getElementById('audioContainer').style.display = 'block';
+                // 检查是否收到结束游戏的信号
+                if (data.game_over) {
+                    loadingDiv.style.display = 'none';
+                    endGame();
+                    return; // 结束后续处理
                 }
 
-                if (audioData.audio_url && audioData.audio_url !== 'None') {
-                    var audioPlayer = document.getElementById('generatedAudio');
-                    audioPlayer.src = audioData.audio_url;
-                    document.getElementById('audioContainer').style.display = 'block';
-                }
+                textResponse.style.display = 'block';
+                document.getElementById('textResponse').innerText = data.description;
 
-                loadingDiv.style.display = 'none';
-                responseContainer.style.display = 'block';
+                document.querySelector('#optionsContainer button:nth-child(1) strong').innerText = data.option1;
+                document.querySelector('#optionsContainer button:nth-child(2) strong').innerText = data.option2;
+
+                // 同时请求图片和音频，使用用户的最后一次选择作为prompt
+                Promise.all([
+                    fetch('/get_image', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({prompt: data.description+"选项一："+data.option1+"选项二："+data.option2}) // 修改这里，使用 userInput 作为 prompt
+                    }),
+                    fetch('/get_audio', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({prompt: data.description}) // 如果需要音频也基于选择进行生成
+                    })
+                ])
+                    .then(([imageResponse, audioResponse]) =>
+                        Promise.all([imageResponse.json(), audioResponse.json()])
+                    )
+                    .then(([imageData, audioData]) => {
+                        console.log('收到图片数据:', imageData);
+                        console.log('收到音频数据:', audioData);
+
+                        if (imageData.image_url && imageData.image_url !== 'None') {
+                            document.getElementById('audioContainer').style.backgroundImage = `url(${imageData.image_url})`;
+                            document.getElementById('audioContainer').style.display = 'block';
+                        }
+
+                        if (audioData.audio_url && audioData.audio_url !== 'None') {
+                            var audioPlayer = document.getElementById('generatedAudio');
+                            audioPlayer.src = audioData.audio_url;
+                            document.getElementById('audioContainer').style.display = 'block';
+                        }
+
+                        loadingDiv.style.display = 'none';
+                        responseContainer.style.display = 'block';
+                    })
+                    .catch(error => {
+                        console.error('获取图片或音频时出错:', error);
+                        loadingDiv.style.display = 'none';
+                    });
+
+                userInputField.value = '';
+                userInputField.disabled = false;
             })
             .catch(error => {
-                console.error('获取图片或音频时出错:', error);
+                console.error('获取文本响应时出错:', error);
                 loadingDiv.style.display = 'none';
+                userInputField.disabled = false;
+                userInputField.value = '';
+                alert('出现错误，请检查');
             });
-
-            userInputField.value = '';
-            userInputField.disabled = false;
-        })
-        .catch(error => {
-            console.error('获取文本响应时出错:', error);
-            loadingDiv.style.display = 'none';
-            userInputField.disabled = false;
-            userInputField.value = '';
-            alert('出现错误，请检查');
-        });
     }
 
     // 处理用户选择选项的函数
     function selectOption(optionNumber) {
         console.log('选项已选择:', optionNumber);
-        var userInput = optionNumber === 1 ? '选择了选项 1' : '选择了选项 2'; // 根据选择的选项设置用户输入
-        document.getElementById('userInput').value = userInput; // 设置用户输入框的值
+        // 获取选项的实际文本内容
+        var optionText = optionNumber === 1
+            ? document.querySelector('#optionsContainer button:nth-child(1) strong').innerText
+            : document.querySelector('#optionsContainer button:nth-child(2) strong').innerText;
+
+        console.log('选项文本:', optionText);
+        document.getElementById('userInput').value = optionText; // 设置用户输入框的值为选项文本
         getUserInput(); // 将选择的选项作为用户输入进行处理
     }
 </script>
