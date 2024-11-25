@@ -1,0 +1,51 @@
+### 测试输入
+POST http://127.0.0.1:5000/api/test HTTP/1.1
+Content-Type: application/json
+
+{
+  "username": "cwh",
+  "password": "1111111",
+  "email": "example@example.com"
+}
+
+
+### 测试输出
+GET http://127.0.0.1:5000/api/users HTTP/1.1
+Authorization: Bearer <your_access_token>
+
+
+### 用户注册
+POST http://127.0.0.1:5000/api/register HTTP/1.1
+Content-Type: application/json
+
+{
+  "username": "cwh",
+  "password": "123456",
+  "email": "example@example.com"
+}
+
+### 用户登录
+POST http://127.0.0.1:5000/api/login HTTP/1.1
+Content-Type: application/json
+
+{
+  "username": "cwh",
+  "password": "123456"
+}
+
+### 创建角色
+POST http://127.0.0.1:5000/api/characters HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTczMjU1NTgyOCwianRpIjoiMTA0MzZkZTYtNTg4My00YmMxLTljNjktN2EyNjllMGU5ZWI1IiwidHlwZSI6ImFjY2VzcyIsInN1YiI6MSwibmJmIjoxNzMyNTU1ODI4LCJjc3JmIjoiYjJmMDM4ODItMmI5ZC00YzJiLTk2MjAtYTYwYTY4ZjYyZWQ4In0.sI7lHrCkA3FxXWs8c_OfyqWIhtom1JK3-X8s-XJvjJA
+
+{
+  "name": "李青",
+  "profession": "Swordmaster"
+}
+
+### 获取角色列表
+GET http://127.0.0.1:5000/api/characters HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTczMjU1NTgyOCwianRpIjoiMTA0MzZkZTYtNTg4My00YmMxLTljNjktN2EyNjllMGU5ZWI1IiwidHlwZSI6ImFjY2VzcyIsInN1YiI6MSwibmJmIjoxNzMyNTU1ODI4LCJjc3JmIjoiYjJmMDM4ODItMmI5ZC00YzJiLTk2MjAtYTYwYTY4ZjYyZWQ4In0.sI7lHrCkA3FxXWs8c_OfyqWIhtom1JK3-X8s-XJvjJA
+
+### 获取地图信息
+GET http://127.0.0.1:5000/api/maps HTTP/1.1

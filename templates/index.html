@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>文字冒险游戏与图片生成</title>
+    <title>愿此行，终抵群星！</title>
     <style>
         /* 通用样式重置 */
         * {
@@ -13,30 +13,32 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-            background-color: #f0f2f5;
-            color: #333;
+            font-family: 'Orbitron', sans-serif;
+            background: radial-gradient(circle, #001d3d, #000814);
+            color: #ffffff;
             text-align: center;
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 30px; /* 增加全局内边距 */
+            padding: 30px;
+            overflow: hidden;
         }
 
-        /* 主容器：增大最大宽度和内边距 */
+        /* 主容器样式 */
         .main-container {
             display: flex;
             flex-direction: row;
             justify-content: space-between;
             align-items: flex-start;
-            max-width: 1600px; /* 增大最大宽度 */
+            max-width: 1600px;
             width: 100%;
-            background-color: #fff;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-            padding: 40px; /* 增加内边距 */
-            gap: 40px; /* 增加组件间距 */
+            background: rgba(0, 10, 30, 0.95);
+            border: 2px solid #468faf;
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(70, 143, 175, 0.7), 0 0 60px rgba(0, 0, 0, 0.8);
+            padding: 40px;
+            gap: 40px;
         }
 
         /* 响应式调整 */
@@ -49,144 +51,150 @@
 
         .left-container, .right-container {
             height: 800px;
-            background-color: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+            background: rgba(0, 10, 40, 0.95);
+            border-radius: 15px;
+            border: 1px solid #468faf;
+            box-shadow: 0 0 40px rgba(70, 143, 175, 0.5), 0 0 30px rgba(0, 0, 0, 0.8);
             flex: 1;
-            padding: 30px; /* 增加子容器内边距 */
+            padding: 30px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 20px; /* 增加子容器内组件间距 */
-        }
-
-        .header {
-            margin-bottom: 30px; /* 增加标题下方间距 */
+            gap: 20px;
         }
 
         .header h1 {
-            font-size: 2.8em; /* 增大标题字体 */
+            font-size: 3em;
             font-weight: 700;
-            color: #409EFF;
+            color: #ffffff;
             margin-bottom: 20px;
+            text-shadow: 0 0 20px #468faf, 0 0 40px #023e8a;
         }
-
         .control-buttons {
             display: flex;
             justify-content: center;
-            gap: 25px; /* 增加按钮间距 */
-            margin-bottom: 25px; /* 增加控制按钮下方间距 */
+            gap: 25px;
+            margin-bottom: 25px;
             flex-wrap: wrap;
         }
 
         .button-option {
-            background-color: #409EFF;
+            background: linear-gradient(45deg, #00ffdd, #004e92);
             border: none;
-            border-radius: 5px;
-            color: #fff;
-            padding: 14px 32px; /* 增大按钮尺寸 */
-            font-size: 18px; /* 增大按钮字体 */
+            border-radius: 10px;
+            color: #000;
+            padding: 16px 36px;
+            font-size: 18px;
             cursor: pointer;
-            font-weight: 500;
-            transition: background-color 0.3s ease, transform 0.2s ease;
+            font-weight: 600;
+            transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
         }
 
         .button-option:disabled {
-            background-color: #a0cfff;
+            background: #002f6c;
             cursor: not-allowed;
         }
 
         .button-option:hover:not(:disabled) {
-            background-color: #66b1ff;
-            transform: translateY(-3px); /* 增大位移效果 */
+            background: linear-gradient(45deg, #005f99, #002f6c);
+            transform: translateY(-5px);
+            box-shadow: 0 0 40px rgba(70, 143, 175, 0.8), 0 0 20px #0096c7;
         }
+
 
         #userInput {
             width: 100%;
-            max-width: 600px; /* 增大输入框宽度 */
-            padding: 16px; /* 增大输入框内边距 */
-            font-size: 18px; /* 增大输入框字体 */
-            border: 1px solid #dcdfe6;
-            border-radius: 5px;
-            margin-bottom: 25px; /* 增加输入框下方间距 */
+            max-width: 600px;
+            padding: 16px;
+            font-size: 18px;
+            border: 1px solid #468faf;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            background: rgba(0, 20, 50, 0.95);
+            color: #ffffff;
             transition: border-color 0.3s ease;
+            box-shadow: 0 0 15px rgba(70, 143, 175, 0.5);
         }
 
         #userInput:focus {
-            border-color: #409EFF;
+            border-color: #90e0ef;
             outline: none;
         }
 
         #userInput:disabled {
-            background-color: #f5f7fa;
+            background-color: #1a1a1a;
             cursor: not-allowed;
         }
 
         #submitButton {
             width: 100%;
-            max-width: 250px; /* 增大提交按钮宽度 */
-            background-color: #409EFF;
+            max-width: 250px;
+            background: linear-gradient(45deg, #0077b6, #023e8a);
             border: none;
-            border-radius: 5px;
-            color: #fff;
-            padding: 14px; /* 增大提交按钮内边距 */
-            font-size: 18px; /* 增大提交按钮字体 */
+            border-radius: 10px;
+            color: #ffffff;
+            padding: 16px;
+            font-size: 18px;
             cursor: pointer;
-            font-weight: 500;
-            transition: background-color 0.3s ease, transform 0.2s ease;
-            margin-top: 15px; /* 增加提交按钮上方间距 */
+            font-weight: 600;
+            transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            margin-top: 15px;
+            box-shadow: 0 0 20px rgba(70, 143, 175, 0.5);
         }
 
         #submitButton:disabled {
-            background-color: #a0cfff;
+            background: #002f6c;
             cursor: not-allowed;
         }
 
         #submitButton:hover:not(:disabled) {
-            background-color: #66b1ff;
-            transform: translateY(-3px); /* 增大位移效果 */
+            background: linear-gradient(45deg, #005f99, #002f6c);
+            transform: translateY(-5px);
+            box-shadow: 0 0 40px rgba(70, 143, 175, 0.8), 0 0 20px #0096c7;
         }
 
         .response-options-container {
             width: 100%;
-            max-width: 600px; /* 增大响应容器宽度 */
-            margin-top: 25px; /* 增加响应容器上方间距 */
+            max-width: 600px;
+            margin-top: 25px;
         }
 
         #textResponse {
-            height: 100px;
-            background-color: #f9f9f9;
-            border: 1px solid #dcdfe6;
-            border-radius: 5px;
-            padding: 25px; /* 增大文本响应内边距 */
-            font-size: 18px; /* 增大文本响应字体 */
+            height: 150px;
+            background: rgba(0, 20, 50, 0.8);
+            border: 1px solid #468faf;
+            border-radius: 10px;
+            padding: 25px;
+            font-size: 18px;
             line-height: 1.6;
-            margin-bottom: 25px; /* 增加文本响应下方间距 */
+            margin-bottom: 25px;
             text-align: left;
+            color: #ffffff;
             transition: opacity 0.3s ease;
+            box-shadow: 0 0 20px rgba(70, 143, 175, 0.5);
         }
 
         #optionsContainer {
             display: flex;
             flex-direction: column;
-            gap: 15px; /* 增加选项按钮间距 */
+            gap: 15px;
             align-items: center;
         }
 
         #optionsContainer .button-option {
             width: 100%;
             height: 50px;
-            max-width: 550px; /* 增大选项按钮宽度 */
+            max-width: 550px;
         }
 
         .loader {
-            border: 6px solid #f3f3f3;
-            border-top: 6px solid #409EFF;
+            border: 6px solid rgba(70, 143, 175, 0.2);
+            border-top: 6px solid #0096c7;
             border-radius: 50%;
-            width: 60px; /* 增大加载器尺寸 */
-            height: 60px;
+            width: 80px;
+            height: 80px;
             animation: spin 1s linear infinite;
-            margin: 50px auto; /* 增加加载器外边距 */
+            margin: 50px auto;
         }
 
         @keyframes spin {
@@ -198,31 +206,22 @@
             }
         }
 
-        .right-container #loading {
-            margin-top: 25px; /* 增加右侧加载器上方间距 */
-            margin: 0 auto;
-        }
-
-        .right-container #responseContainer {
-            margin-top: 25px; /* 增加右侧响应容器上方间距 */
-            width: 100%;
-        }
-
         .image-audio-container {
             position: relative;
             display: inline-block;
-            margin: 25px auto; /* 增加图片音频容器外边距 */
+            margin: 25px auto;
             width: 100%;
-            max-width: 600px; /* 增大图片音频容器宽度 */
+            max-width: 600px;
         }
 
         .image-audio-container img {
             display: block;
             width: 100%;
             height: auto;
-            border-radius: 10px; /* 增大图片圆角 */
-            border: 1px solid #dcdfe6;
+            border-radius: 15px;
+            border: 1px solid #468faf;
             transition: opacity 0.3s ease;
+            box-shadow: 0 0 20px rgba(70, 143, 175, 0.7);
         }
 
         .audio-overlay {
@@ -231,19 +230,19 @@
             left: 50%;
             transform: translateX(-50%);
             width: 100%;
-            background: rgba(0, 0, 0, 0.6);
-            padding: 15px 0; /* 增大音频覆盖层内边距 */
-            border-bottom-left-radius: 10px; /* 增大圆角 */
-            border-bottom-right-radius: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px 0;
+            border-bottom-left-radius: 15px;
+            border-bottom-right-radius: 15px;
         }
 
         .audio-overlay audio {
-            width: 95%; /* 增大音频播放器宽度 */
+            width: 95%;
             margin: 0 auto;
             display: block;
         }
-
     </style>
+    <link href="reference.css" rel="stylesheet">
 </head>
 <body>
 
@@ -251,7 +250,7 @@
     <!-- 左侧容器 -->
     <div class="left-container">
         <div class="header">
-            <h1>文字冒险游戏与图片生成</h1>
+            <h1>愿此行，终抵群星！</h1>
         </div>
         <!-- 游戏开始和结束按钮 -->
         <div class="control-buttons">
@@ -313,7 +312,7 @@
         document.getElementById('generatedImage').style.display = 'none';
 
         // 自动触发初始请求
-        getUserInput('欢迎来到冒险游戏！');
+        getUserInput('欢迎来到星际旅行游戏！');
 
         // 添加回车键监听事件
         document.getElementById('userInput').addEventListener('keydown', handleUserInputEnter);
