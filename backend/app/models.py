@@ -14,7 +14,7 @@ class User(db.Model):
     password = db.Column(db.String())
     email = db.Column(db.String(120), unique=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
+    role = db.Column(db.String(50), default='player', nullable=False)  # 角色字段，默认为普通用户
     characters = db.relationship('Character', backref='user', lazy=True)
     #
     # def set_password(self, password):

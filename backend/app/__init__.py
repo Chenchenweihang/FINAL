@@ -18,8 +18,8 @@ def create_app():
     db.init_app(app)
     jwt.init_app(app)
 
-    # 配置 CORS
-    CORS(app)
+    # 配置 CORS，允许所有来源跨域请求
+    CORS(app, supports_credentials=True)
 
     # 导入并注册蓝图
     from .routes import main_bp  # 使用相对导入
