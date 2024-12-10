@@ -390,7 +390,7 @@ def get_combat_events():
 def get_item(item_id):
     item = Item.query.get(item_id)
     if not item:
-        return jsonify({'message': 'Item not found.'}), 404
+        return jsonify({'message': 'Items not found.'}), 404
 
     item_data = {
         'id': item.id,
@@ -448,7 +448,7 @@ def manage_items():
         db.session.add(new_item)
         db.session.commit()
 
-        return jsonify({'message': 'Item created successfully.', 'item_id': new_item.id}), 201
+        return jsonify({'message': 'Items created successfully.', 'item_id': new_item.id}), 201
 
 
 # 创建任务

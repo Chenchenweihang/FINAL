@@ -49,3 +49,18 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsI
 
 ### 获取地图信息
 GET http://127.0.0.1:5000/api/maps HTTP/1.1
+
+
+
+### 获取用户角色列表
+GET http://127.0.0.1:5000/characters/?user_id=1 HTTP/1.1
+Content-Type: application/json
+
+### 获取职业技能
+POST http://127.0.0.1:5000/battles/4/action HTTP/1.1
+Content-Type: application/json
+
+{
+    "action": "attack",
+    "character_id": 1
+}
