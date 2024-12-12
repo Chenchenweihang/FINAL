@@ -5,6 +5,15 @@ from datetime import datetime
 
 db = SQLAlchemy()
 
+# 定义关联表 MapAdjacency
+class MapAdjacency(db.Model):
+    __tablename__ = 'MapAdjacency'
+    id = db.Column(db.Integer, primary_key=True)
+    map1_id = db.Column(db.Integer, db.ForeignKey('Maps.id'), nullable=False)
+    map2_id = db.Column(db.Integer, db.ForeignKey('Maps.id'), nullable=False)
+    __table_args__ = (db.UniqueConstraint('map1_id', 'map2_id', name='_map_adjacency_uc'),)
+
+
 class User(db.Model):
     __tablename__ = 'Users'
     id = db.Column(db.Integer, primary_key=True)
@@ -35,7 +44,7 @@ class Character(db.Model):
 class Skill(db.Model):
     __tablename__ = 'Skills'
     id = db.Column(db.Integer, primary_key=True)
-    profession = db.Column(db.Enum('剑侠', '武者', '医士', '刺客', '道士'), nullable=False)
+    profession = db.Column(db.Enum('剑侠', '武者', '刺客', '道士'), nullable=False)
     name = db.Column(db.String(80), nullable=False)
     description = db.Column(db.Text, nullable=False)
     level_required = db.Column(db.Integer, nullable=False)
@@ -48,7 +57,6 @@ class CharacterSkill(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     character_id = db.Column(db.Integer, db.ForeignKey('Characters.id'), nullable=False)
     skill_id = db.Column(db.Integer, db.ForeignKey('Skills.id'), nullable=False)
-    level = db.Column(db.Integer, default=1)  # 技能等级
     __table_args__ = (db.UniqueConstraint('character_id', 'skill_id', name='_character_skill_uc'),)
     skill = db.relationship('Skill', backref='character_skills')
 
@@ -57,13 +65,13 @@ class Set(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), nullable=False)
     bonus = db.Column(db.JSON, nullable=False)
-    items = db.relationship('Items', backref='set', lazy=True)
+    items = db.relationship('Item', backref='set', lazy=True)
 
 class Item(db.Model):
     __tablename__ = 'Items'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), nullable=False)
-    type = db.Column(db.Enum('武器', '防具', '饰品', '法宝', '药水'), nullable=False)
+    type = db.Column(db.Enum('武器', '防具', '饰品', '法宝'), nullable=False)  # 移除'药水'
     base_attribute = db.Column(db.JSON, nullable=False)
     extra_attribute = db.Column(db.JSON, nullable=True)
     set_id = db.Column(db.Integer, db.ForeignKey('Sets.id'), nullable=True)
@@ -85,6 +93,14 @@ class Map(db.Model):
     level_required = db.Column(db.Integer, nullable=False)
     parent_map = db.Column(db.String(80), nullable=False)
     events = db.relationship('Event', backref='map', lazy=True)
+    neighbors = db.relationship(
+        'Map',
+        secondary='MapAdjacency',
+        primaryjoin='Map.id == MapAdjacency.map1_id',
+        secondaryjoin='Map.id == MapAdjacency.map2_id',
+        backref='adjacent_maps'
+    )
+
 
 class Event(db.Model):
     __tablename__ = 'Events'
@@ -106,13 +122,18 @@ class Enemy(db.Model):
     skills = db.Column(db.JSON, nullable=False)
     battles = db.relationship('Battle', backref='enemy', lazy=True)
 
+
 class Battle(db.Model):
     __tablename__ = 'Battles'
     id = db.Column(db.Integer, primary_key=True)
     event_id = db.Column(db.Integer, db.ForeignKey('Events.id'), nullable=False)
     enemy_id = db.Column(db.Integer, db.ForeignKey('Enemies.id'), nullable=False)
-    battle_data = db.Column(db.JSON, nullable=False)
+    battle_data = db.Column(db.JSON, nullable=False, default={})
+    current_turn = db.Column(db.String(20), nullable=False, default='character')  # 'character' 或 'enemy'
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
+    result = db.Column(db.Enum('victory', 'defeat', 'escape'), nullable=True)
     status_effects = db.relationship('StatusEffect', backref='battle', lazy=True)
+
 
 class StatusEffect(db.Model):
     __tablename__ = 'StatusEffects'

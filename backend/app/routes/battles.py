@@ -1,12 +1,11 @@
 # backend/app/routes/battles.py
 
 from flask import Blueprint, request, jsonify
-from ..models import db, Battle, Enemy, Character, StatusEffect, Skill, CharacterSkill
-from sqlalchemy import and_
+from ..models import db, Battle, Enemy, Character, StatusEffect, Skill, CharacterSkill, Item, CharacterItem
+from sqlalchemy.exc import IntegrityError
 import random
 
 battles_bp = Blueprint('battles', __name__)
-
 
 @battles_bp.route('/<int:battle_id>', methods=['GET'])
 def get_battle(battle_id):
@@ -14,7 +13,7 @@ def get_battle(battle_id):
     if not battle:
         return jsonify({'message': '战斗不存在'}), 404
 
-    enemy = Enemy.query.get(battle.enemy_id)
+    enemy = battle.enemy
     if not enemy:
         return jsonify({'message': '敌人信息未找到'}), 404
 
@@ -43,7 +42,6 @@ def get_battle(battle_id):
 
     return jsonify({'battle': battle_data}), 200
 
-
 @battles_bp.route('/<int:battle_id>/action', methods=['POST'])
 def perform_action(battle_id):
     data = request.get_json()
@@ -58,7 +56,7 @@ def perform_action(battle_id):
     if not battle:
         return jsonify({'message': '战斗不存在'}), 404
 
-    enemy = Enemy.query.get(battle.enemy_id)
+    enemy = battle.enemy
     if not enemy:
         return jsonify({'message': '敌人信息未找到'}), 404
 
@@ -66,53 +64,43 @@ def perform_action(battle_id):
     if not character:
         return jsonify({'message': '角色不存在'}), 404
 
-    # 简化战斗逻辑：忽略状态效果对行动的影响
+    # 初始化战斗数据
+    if not battle.battle_data:
+        battle.battle_data = {
+            'player_health': character.health,
+            'enemy_health': enemy.health,
+            'turn': 'player',  # 'player' or 'enemy'
+            'turn_count': 1,
+            'action_taken': False  # 新增：标记本回合是否已执行动作
+        }
 
+    # 处理状态效果
+    active_effects = StatusEffect.query.filter_by(battle_id=battle_id).all()
+    for effect in active_effects:
+        if effect.effect_type == 'stun' and effect.target == 'player':
+            return jsonify({'message': '你被眩晕，无法行动'}), 400
+        # 处理其他效果如减速等
+        # 这里可以根据需要添加更多状态效果的处理逻辑
+
+    # 获取当前回合
+    current_turn = battle.battle_data.get('turn', 'player')
+
+    if current_turn != 'player':
+        return jsonify({'message': '当前不是玩家的回合'}), 400
+
+    # 检查是否已经执行过动作
+    if battle.battle_data.get('action_taken', False):
+        return jsonify({'message': '本回合已执行过动作'}), 400
+
+    # 处理玩家行动
     if action == 'attack':
         damage = max(character.attack - enemy.defense, 0)
-        enemy.health -= damage
-        battle.battle_data['enemy_health'] = enemy.health
-
-        # 检查敌人是否死亡
-        if enemy.health <= 0:
-            # 战斗胜利
-            experience_gained = 100
-            character.experience += experience_gained
-            # 处理战斗奖励
-            loot = battle.battle_data.get('loot', {})
-            if 'experience' in loot:
-                character.experience += loot['experience']
-            if 'item_id' in loot:
-                item_id = loot['item_id']
-                from ..models import CharacterItem
-                # 检查背包容量
-                current_inventory_count = CharacterItem.query.filter_by(character_id=character_id).count()
-                if current_inventory_count < character.inventory_capacity:
-                    character_item = CharacterItem(
-                        character_id=character_id,
-                        item_id=item_id,
-                        equipped=False
-                    )
-                    db.session.add(character_item)
-            db.session.commit()
-            return jsonify({'result': 'victory', 'experience_gained': experience_gained}), 200
-        else:
-            # 敌人反击
-            damage_to_player = max(enemy.attack - character.defense, 0)
-            character.health -= damage_to_player
-            battle.battle_data['player_health'] = character.health
-
-            if character.health <= 0:
-                db.session.commit()
-                return jsonify({'result': 'defeat'}), 200
-            else:
-                db.session.commit()
-                return jsonify({
-                    'result': 'ongoing',
-                    'player_health': character.health,
-                    'enemy_health': enemy.health
-                }), 200
-
+        battle.battle_data['enemy_health'] -= damage
+        battle.battle_data['last_action'] = {
+            'type': 'attack',
+            'damage': damage
+        }
+        battle.battle_data['action_taken'] = True  # 标记动作已执行
     elif action == 'skill':
         if not skill_id:
             return jsonify({'message': '使用技能时需要提供 skill_id'}), 400
@@ -128,10 +116,16 @@ def perform_action(battle_id):
         if character.mana < skill.mana_cost:
             return jsonify({'message': '法力值不足'}), 400
 
+        # 检查技能冷却
+        last_used_turn = battle.battle_data.get(f'skill_{skill_id}_last_used_turn', 0)
+        if (battle.battle_data['turn_count'] - last_used_turn) < skill.cooldown:
+            remaining_cooldown = skill.cooldown - (battle.battle_data['turn_count'] - last_used_turn)
+            return jsonify({'message': f'技能冷却中，剩余{remaining_cooldown}回合'}), 400
+
         # 扣除法力
         character.mana -= skill.mana_cost
 
-        # 根据技能效果处理
+        # 应用技能效果
         effect = skill.effect
         target = effect.get('target', 'single')
         damage_type = effect.get('damage_type', 'physical')
@@ -146,8 +140,8 @@ def perform_action(battle_id):
 
         if target == 'single':
             damage = max(base_damage - enemy.defense, 0)
-            enemy.health -= damage
-            # 处理额外效果
+            battle.battle_data['enemy_health'] -= damage
+            # 处理额外效果，如眩晕
             if 'stun_chance' in effect and random.random() < effect['stun_chance']:
                 stun_duration = effect.get('stun_duration', 1)
                 status = StatusEffect(
@@ -158,10 +152,10 @@ def perform_action(battle_id):
                     parameters={}
                 )
                 db.session.add(status)
-        elif target == 'aoe':
+        elif target == 'cone_aoe':
             damage = max(base_damage - enemy.defense, 0)
-            enemy.health -= damage
-            # 处理额外效果，如出血
+            battle.battle_data['enemy_health'] -= damage
+            # 处理其他效果如出血等
             if 'bleed' in effect:
                 bleed = effect['bleed']
                 status = StatusEffect(
@@ -172,75 +166,147 @@ def perform_action(battle_id):
                     parameters={'damage_percent_hp': bleed['damage_percent_hp']}
                 )
                 db.session.add(status)
-        elif target == 'cone_aoe':
-            # 假设只有一个敌人，类似单体
-            damage = max(base_damage - enemy.defense, 0)
-            enemy.health -= damage
-            if 'stun_duration' in effect:
-                status = StatusEffect(
-                    battle_id=battle_id,
-                    target='enemy',
-                    effect_type='stun',
-                    duration=effect['stun_duration'],
-                    parameters={}
-                )
-                db.session.add(status)
-        elif target == 'wide_aoe':
-            damage = max(base_damage - enemy.defense, 0)
-            enemy.health -= damage
-            if 'attack_speed_reduction' in effect:
-                status = StatusEffect(
-                    battle_id=battle_id,
-                    target='enemy',
-                    effect_type='attack_speed_reduction',
-                    duration=effect['duration'],
-                    parameters={'reduction': effect['attack_speed_reduction']}
-                )
-                db.session.add(status)
-        # 其他目标类型的处理...
+        # 处理其他目标类型...
 
-        # 检查敌人是否死亡
-        if enemy.health <= 0:
-            # 战斗胜利
-            experience_gained = 100
-            character.experience += experience_gained
-            # 处理战斗奖励
-            loot = battle.battle_data.get('loot', {})
-            if 'experience' in loot:
-                character.experience += loot['experience']
-            if 'item_id' in loot:
-                item_id = loot['item_id']
-                from ..models import CharacterItem
-                # 检查背包容量
-                current_inventory_count = CharacterItem.query.filter_by(character_id=character_id).count()
-                if current_inventory_count < character.inventory_capacity:
-                    character_item = CharacterItem(
-                        character_id=character_id,
-                        item_id=item_id,
-                        equipped=False
-                    )
-                    db.session.add(character_item)
+        # 更新技能冷却
+        battle.battle_data[f'skill_{skill_id}_last_used_turn'] = battle.battle_data.get('turn_count', 1)
+
+        # 记录最后行动
+        battle.battle_data['last_action'] = {
+            'type': 'skill',
+            'skill_id': skill_id,
+            'damage': damage
+        }
+        battle.battle_data['action_taken'] = True  # 标记动作已执行
+    elif action == 'escape':
+        # 实现逃跑逻辑
+        battle.battle_data['escaped'] = True
+        battle.battle_data['result'] = 'escaped'
+        db.session.commit()
+        return jsonify({'result': 'escaped'}), 200
+    else:
+        return jsonify({'message': '无效的行动类型'}), 400
+
+    # 检查敌人是否死亡
+    if battle.battle_data['enemy_health'] <= 0:
+        # 战斗胜利
+        battle.battle_data['result'] = 'victory'
+        experience_gained = 100  # 示例经验值
+        character.experience += experience_gained
+
+        # 处理战斗奖励
+        loot = battle.outcomes.get('loot', {})
+        if 'experience' in loot:
+            character.experience += loot['experience']
+        if 'item_ids' in loot:
+            for item_id in loot['item_ids']:
+                item = Item.query.get(item_id)
+                if item:
+                    # 检查背包容量
+                    current_inventory_count = CharacterItem.query.filter_by(character_id=character_id).count()
+                    if current_inventory_count < character.inventory_capacity:
+                        new_character_item = CharacterItem(
+                            character_id=character_id,
+                            item_id=item_id,
+                            equipped=False
+                        )
+                        db.session.add(new_character_item)
+
+        db.session.commit()
+        return jsonify({'result': 'victory', 'experience_gained': experience_gained}), 200
+
+    # 敌人的回合
+    if not battle.battle_data.get('escaped', False):
+        enemy_action = random.choice(['attack', 'skill'])
+        if enemy_action == 'attack':
+            enemy_damage = max(enemy.attack - character.defense, 0)
+            battle.battle_data['player_health'] -= enemy_damage
+            battle.battle_data['last_enemy_action'] = {
+                'type': 'attack',
+                'damage': enemy_damage
+            }
+        elif enemy_action == 'skill':
+            enemy_skills = enemy.skills.get('skills', [])
+            if enemy_skills:
+                skill_name = random.choice(enemy_skills)
+                # 根据技能名称查找技能
+                skill = Skill.query.filter_by(name=skill_name, profession='武者').first()  # 假设敌人职业为武者
+                if skill and character.mana >= skill.mana_cost:
+                    # 扣除法力
+                    character.mana -= skill.mana_cost
+                    # 应用技能效果
+                    effect = skill.effect
+                    target = effect.get('target', 'single')
+                    damage_type = effect.get('damage_type', 'physical')
+                    damage = 0
+
+                    if damage_type == 'physical':
+                        base_damage = enemy.attack
+                    elif damage_type == 'magic':
+                        base_damage = 15  # 示例法术伤害
+                    else:
+                        base_damage = 0
+
+                    if target == 'single':
+                        damage = max(base_damage - character.defense, 0)
+                        battle.battle_data['player_health'] -= damage
+                        # 处理额外效果，如眩晕
+                        if 'stun_chance' in effect and random.random() < effect['stun_chance']:
+                            stun_duration = effect.get('stun_duration', 1)
+                            status = StatusEffect(
+                                battle_id=battle_id,
+                                target='character',
+                                effect_type='stun',
+                                duration=stun_duration,
+                                parameters={}
+                            )
+                            db.session.add(status)
+                    elif target == 'cone_aoe':
+                        damage = max(base_damage - character.defense, 0)
+                        battle.battle_data['player_health'] -= damage
+                        # 处理其他效果如出血等
+                        if 'bleed' in effect:
+                            bleed = effect['bleed']
+                            status = StatusEffect(
+                                battle_id=battle_id,
+                                target='character',
+                                effect_type='bleed',
+                                duration=bleed['duration'],
+                                parameters={'damage_percent_hp': bleed['damage_percent_hp']}
+                            )
+                            db.session.add(status)
+                    # 处理其他目标类型...
+
+                    battle.battle_data['last_enemy_action'] = {
+                        'type': 'skill',
+                        'skill_name': skill_name,
+                        'damage': damage
+                    }
+
+        # 检查角色是否死亡
+        if battle.battle_data['player_health'] <= 0:
+            battle.battle_data['result'] = 'defeat'
             db.session.commit()
-            return jsonify({'result': 'victory', 'experience_gained': experience_gained, 'damage_dealt': damage}), 200
-        else:
-            # 敌人反击
-            damage_to_player = max(enemy.attack - character.defense, 0)
-            character.health -= damage_to_player
-            battle.battle_data['player_health'] = character.health
+            return jsonify({'result': 'defeat'}), 200
 
-            if character.health <= 0:
-                db.session.commit()
-                return jsonify({'result': 'defeat'}), 200
-            else:
-                db.session.commit()
-                return jsonify({
-                    'result': 'ongoing',
-                    'player_health': character.health,
-                    'enemy_health': enemy.health,
-                    'damage_dealt': damage,
-                    'damage_received': damage_to_player
-                }), 200
+    # 更新回合信息
+    # 切换回合并重置 action_taken
+    if battle.battle_data['turn'] == 'player':
+        battle.battle_data['turn'] = 'enemy'
+    else:
+        battle.battle_data['turn'] = 'player'
+        battle.battle_data['turn_count'] = battle.battle_data.get('turn_count', 1) + 1
+        battle.battle_data['action_taken'] = False  # 重置动作标记
 
+    db.session.commit()
+
+    return jsonify({
+        'result': 'ongoing',
+        'player_health': battle.battle_data['player_health'],
+        'enemy_health': battle.battle_data['enemy_health'],
+        'last_action': battle.battle_data.get('last_action'),
+        'last_enemy_action': battle.battle_data.get('last_enemy_action')
+    }), 200
 
 @battles_bp.route('/<int:battle_id>/status', methods=['GET'])
 def get_battle_status(battle_id):
@@ -259,3 +325,6 @@ def get_battle_status(battle_id):
     ]
 
     return jsonify({'status_effects': status_effects}), 200
+
+
+# 开始战斗

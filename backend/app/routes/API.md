@@ -1,3 +1,6 @@
+
+---
+
 # API 文档
 
 ## 目录
@@ -14,22 +17,19 @@
 3. [技能管理](#技能管理)
    - [获取职业技能列表](#获取职业技能列表)
    - [学习技能](#学习技能)
-   - [升级技能](#升级技能)
    - [获取角色技能列表](#获取角色技能列表)
 4. [地图管理](#地图管理)
    - [获取地图列表](#获取地图列表)
    - [获取地图详情](#获取地图详情)
 5. [任务系统](#任务系统)
-   - [创建任务](#创建任务)
    - [获取任务详情](#获取任务详情)
-   - [分配任务](#分配任务)
    - [获取角色任务列表](#获取角色任务列表)
    - [更新角色任务状态](#更新角色任务状态)
 6. [背包管理](#背包管理)
    - [添加物品到背包](#添加物品到背包)
    - [移除物品从背包](#移除物品从背包)
-   - [使用物品](#使用物品)
-   - [获取角色背包](#获取角色背包)
+   - [获取已装备物品](#获取已装备物品)
+   - [获取未装备物品](#获取未装备物品)
    - [装备/卸下物品](#装备卸下物品)
 7. [物品管理](#物品管理)
    - [获取所有物品](#获取所有物品)
@@ -393,6 +393,18 @@
                     "stun_chance": 0.3,
                     "stun_duration": 1
                 }
+            },
+            {
+                "id": 2,
+                "name": "旋风剑舞",
+                "description": "快速挥舞剑刃，对前方扇形区域的敌人造成物理伤害。",
+                "level_required": 6,
+                "cooldown": 3,
+                "mana_cost": 40,
+                "effect": {
+                    "damage_type": "physical",
+                    "target": "cone_aoe"
+                }
             }
         ]
     }
@@ -439,6 +451,22 @@
 
     ```json
     {
+        "message": "缺少必要参数"
+    }
+    ```
+
+    或
+
+    ```json
+    {
+        "message": "技能职业不匹配"
+    }
+    ```
+
+    或
+
+    ```json
+    {
         "message": "角色等级不足以学习该技能"
     }
     ```
@@ -455,66 +483,7 @@
 
     ```json
     {
-        "message": "技能职业不匹配"
-    }
-    ```
-
-    或
-
-    ```json
-    {
         "message": "角色不存在"
-    }
-    ```
-
-    或
-
-    ```json
-    {
-        "message": "技能不存在"
-    }
-    ```
-
-### 升级技能
-
-- **URL**: `/skills/upgrade`
-- **方法**: `POST`
-- **Headers**: `Content-Type: application/json`
-- **Body**:
-
-  ```json
-  {
-      "character_id": 1,
-      "skill_id": 1
-  }
-  ```
-
-- **成功响应**:
-  - **状态码**: `200 OK`
-  - **内容**:
-
-    ```json
-    {
-        "message": "技能升级成功",
-        "new_level": 2
-    }
-    ```
-
-- **错误响应**:
-  - **状态码**: `400 Bad Request`
-  - **内容**:
-
-    ```json
-    {
-        "message": "角色等级不足以升级该技能"
-    }
-    ```
-
-    或
-
-    ```json
-    {
-        "message": "角色未学习该技能"
     }
     ```
 
@@ -553,8 +522,7 @@
                     "target": "single",
                     "stun_chance": 0.3,
                     "stun_duration": 1
-                },
-                "level": 1
+                }
             }
         ]
     }
@@ -591,10 +559,41 @@
         "maps": [
             {
                 "id": 1,
-                "name": "安茂集会",
+                "name": "锦绣坊",
                 "description": "都城最繁华的区域，各种奇珍异宝可在此交易。",
                 "level_required": 1,
-                "parent_map": "天都城"
+                "parent_map": "天都城",
+                "adjacent_maps": [
+                    {
+                        "id": 2,
+                        "name": "御龙殿"
+                    },
+                    {
+                        "id": 4,
+                        "name": "安茂集会"
+                    }
+                ]
+            },
+            {
+                "id": 2,
+                "name": "御龙殿",
+                "description": "御龙之地，供奉着天道大陆的神龙。",
+                "level_required": 2,
+                "parent_map": "天都城",
+                "adjacent_maps": [
+                    {
+                        "id": 1,
+                        "name": "锦绣坊"
+                    },
+                    {
+                        "id": 3,
+                        "name": "琉璃宫"
+                    },
+                    {
+                        "id": 5,
+                        "name": "观星阁"
+                    }
+                ]
             }
         ]
     }
@@ -625,10 +624,20 @@
     {
         "map": {
             "id": 1,
-            "name": "安茂集会",
+            "name": "锦绣坊",
             "description": "都城最繁华的区域，各种奇珍异宝可在此交易。",
             "level_required": 1,
-            "parent_map": "天都城"
+            "parent_map": "天都城",
+            "adjacent_maps": [
+                {
+                    "id": 2,
+                    "name": "御龙殿"
+                },
+                {
+                    "id": 4,
+                    "name": "安茂集会"
+                }
+            ]
         }
     }
     ```
@@ -647,57 +656,6 @@
 
 ## 任务系统
 
-### 创建任务
-
-- **URL**: `/tasks/`
-- **方法**: `POST`
-- **Headers**: `Content-Type: application/json`
-- **Body**:
-
-  ```json
-  {
-      "name": "主线任务1",
-      "description": "完成天都城的某个事件。",
-      "task_type": "主线",
-      "requirements": {
-          "level": 5
-      },
-      "rewards": {
-          "experience": 500,
-          "item_id": 3
-      }
-  }
-  ```
-
-- **成功响应**:
-  - **状态码**: `201 Created`
-  - **内容**:
-
-    ```json
-    {
-        "message": "任务创建成功",
-        "task_id": 1
-    }
-    ```
-
-- **错误响应**:
-  - **状态码**: `400 Bad Request`
-  - **内容**:
-
-    ```json
-    {
-        "message": "缺少必要参数"
-    }
-    ```
-
-    或
-
-    ```json
-    {
-        "message": "无效的任务类型"
-    }
-    ```
-
 ### 获取任务详情
 
 - **URL**: `/tasks/<int:task_id>`
@@ -714,10 +672,10 @@
         "task": {
             "id": 1,
             "name": "主线任务1",
-            "description": "完成天都城的某个事件。",
+            "description": "完成安茂集会的战斗。",
             "task_type": "主线",
             "requirements": {
-                "level": 5
+                "level": 1
             },
             "rewards": {
                 "experience": 500,
@@ -731,65 +689,6 @@
 - **错误响应**:
   - **状态码**: `404 Not Found`
   - **内容**:
-
-    ```json
-    {
-        "message": "任务不存在"
-    }
-    ```
-
-### 分配任务
-
-- **URL**: `/tasks/assign`
-- **方法**: `POST`
-- **Headers**: `Content-Type: application/json`
-- **Body**:
-
-  ```json
-  {
-      "character_id": 1,
-      "task_id": 1
-  }
-  ```
-
-- **成功响应**:
-  - **状态码**: `201 Created`
-  - **内容**:
-
-    ```json
-    {
-        "message": "任务已分配",
-        "character_task_id": 1
-    }
-    ```
-
-- **错误响应**:
-  - **状态码**: `400 Bad Request`
-  - **内容**:
-
-    ```json
-    {
-        "message": "任务已分配给该角色"
-    }
-    ```
-
-    或
-
-    ```json
-    {
-        "message": "缺少必要参数"
-    }
-    ```
-
-    或
-
-    ```json
-    {
-        "message": "角色不存在"
-    }
-    ```
-
-    或
 
     ```json
     {
@@ -815,8 +714,17 @@
                 "character_task_id": 1,
                 "task_id": 1,
                 "name": "主线任务1",
-                "description": "完成天都城的某个事件。",
+                "description": "完成安茂集会的战斗。",
                 "task_type": "主线",
+                "status": "未开始",
+                "progress": {}
+            },
+            {
+                "character_task_id": 2,
+                "task_id": 2,
+                "name": "支线任务1",
+                "description": "探索藏龙洞天并找到传说中的武器。",
+                "task_type": "支线",
                 "status": "未开始",
                 "progress": {}
             }
@@ -1007,68 +915,10 @@
     }
     ```
 
-### 使用物品
+### 获取已装备物品
 
-- **URL**: `/inventory/use`
-- **方法**: `POST`
-- **Headers**: `Content-Type: application/json`
-- **Body**:
-
-  ```json
-  {
-      "character_id": 1,
-      "item_id": 3
-  }
-  ```
-
-- **成功响应**:
-  - **状态码**: `200 OK`
-  - **内容**:
-
-    ```json
-    {
-        "message": "使用龙鳞项链，恢复了50生命值"
-    }
-    ```
-
-    或
-
-    ```json
-    {
-        "message": "使用玄铁护甲，攻击力增加了20"
-    }
-    ```
-
-- **错误响应**:
-  - **状态码**: `400 Bad Request`
-  - **内容**:
-
-    ```json
-    {
-        "message": "该物品无法使用"
-    }
-    ```
-
-    或
-
-    ```json
-    {
-        "message": "缺少必要参数"
-    }
-    ```
-
-    或
-
-    ```json
-    {
-        "message": "物品不在角色背包中"
-    }
-    ```
-
-### 获取角色背包
-
-- **URL**: `/inventory/<int:character_id>`
-  - **示例**: `/inventory/1`
+- **URL**: `/inventory/equipped/<int:character_id>`
+  - **示例**: `/inventory/equipped/1`
 - **方法**: `GET`
 - **Headers**: `Content-Type: application/json`
 
@@ -1078,14 +928,48 @@
 
     ```json
     {
-        "inventory": [
+        "equipped_items": [
             {
                 "item_id": 2,
                 "name": "玄铁护甲",
                 "type": "防具",
                 "base_attribute": {"defense": 20},
-                "extra_attribute": null,
-                "equipped": false
+                "extra_attribute": null
+            }
+        ]
+    }
+    ```
+
+- **错误响应**:
+  - **状态码**: `404 Not Found`
+  - **内容**:
+
+    ```json
+    {
+        "message": "角色不存在"
+    }
+    ```
+
+### 获取未装备物品
+
+- **URL**: `/inventory/unequipped/<int:character_id>`
+  - **示例**: `/inventory/unequipped/1`
+- **方法**: `GET`
+- **Headers**: `Content-Type: application/json`
+
+- **成功响应**:
+  - **状态码**: `200 OK`
+  - **内容**:
+
+    ```json
+    {
+        "unequipped_items": [
+            {
+                "item_id": 3,
+                "name": "龙鳞项链",
+                "type": "饰品",
+                "base_attribute": {"health_bonus": 50},
+                "extra_attribute": null
             }
         ]
     }
@@ -1193,6 +1077,14 @@
                 "base_attribute": {"attack": 15},
                 "extra_attribute": {"critical_chance": 10},
                 "set_id": 1
+            },
+            {
+                "id": 2,
+                "name": "玄铁护甲",
+                "type": "防具",
+                "base_attribute": {"defense": 20},
+                "extra_attribute": null,
+                "set_id": null
             }
         ]
     }
@@ -1386,7 +1278,7 @@
     {
         "battle": {
             "id": 1,
-            "event_id": 2,
+            "event_id": 1,
             "enemy": {
                 "id": 1,
                 "name": "黑风帮头目",
@@ -1394,18 +1286,14 @@
                 "attack": 20,
                 "defense": 10,
                 "skills": {
-                    "skill1": "猛攻",
-                    "skill2": "防御"
+                    "skills": ["猛攻", "防御"]
                 }
             },
             "battle_data": {
-                "enemy_skills": ["猛攻", "防御"],
-                "loot": {
-                    "experience": 100,
-                    "item_id": 2
-                },
+                "player_health": 100,
                 "enemy_health": 150,
-                "player_health": 100
+                "turn": "player",
+                "turn_count": 1
             },
             "status_effects": []
         }
@@ -1449,29 +1337,44 @@
 
 - **成功响应**:
   - **状态码**: `200 OK`
-  - **内容**（攻击示例）:
+  - **内容**（战斗进行中）:
 
     ```json
     {
         "result": "ongoing",
         "player_health": 95,
-        "enemy_health": 140
+        "enemy_health": 140,
+        "last_action": {
+            "type": "attack",
+            "damage": 10
+        },
+        "last_enemy_action": {
+            "type": "attack",
+            "damage": 5
+        }
     }
     ```
 
-    或（使用技能示例）:
+    或者（使用技能）:
 
     ```json
     {
         "result": "ongoing",
         "player_health": 90,
         "enemy_health": 130,
-        "damage_dealt": 20,
-        "damage_received": 10
+        "last_action": {
+            "type": "skill",
+            "skill_id": 2,
+            "damage": 20
+        },
+        "last_enemy_action": {
+            "type": "attack",
+            "damage": 10
+        }
     }
     ```
 
-    或（战斗胜利）:
+    或者（战斗胜利）:
 
     ```json
     {
@@ -1480,7 +1383,7 @@
     }
     ```
 
-    或（战斗失败）:
+    或者（战斗失败）:
 
     ```json
     {
@@ -1488,9 +1391,33 @@
     }
     ```
 
+    或者（逃跑成功）:
+
+    ```json
+    {
+        "result": "escaped"
+    }
+    ```
+
 - **错误响应**:
   - **状态码**: `400 Bad Request`
   - **内容**:
+
+    ```json
+    {
+        "message": "缺少必要参数"
+    }
+    ```
+
+    或
+
+    ```json
+    {
+        "message": "无效的行动类型"
+    }
+    ```
+
+    或
 
     ```json
     {
@@ -1510,6 +1437,14 @@
 
     ```json
     {
+        "message": "技能冷却中"
+    }
+    ```
+
+    或
+
+    ```json
+    {
         "message": "角色未学习该技能"
     }
     ```
@@ -1518,7 +1453,7 @@
 
     ```json
     {
-        "message": "缺少必要参数"
+        "message": "技能不存在"
     }
     ```
 
@@ -1526,7 +1461,15 @@
 
     ```json
     {
-        "message": "技能不存在"
+        "message": "当前不是玩家的回合"
+    }
+    ```
+
+    或
+
+    ```json
+    {
+        "message": "你被眩晕，无法行动"
     }
     ```
 
@@ -1591,15 +1534,16 @@
     {
         "event": {
             "id": 1,
-            "map_id": 1,
-            "description": "你在天都城的锦绣坊发现了一件奇珍异宝。",
-            "event_type": "剧情",
+            "map_id": 4,
+            "description": "你在安茂集会遇到了黑风帮的头目，触发战斗。",
+            "event_type": "战斗",
             "conditions": {
                 "level": 1
             },
             "outcomes": {
-                "reward": {
-                    "item_id": 1
+                "loot": {
+                    "experience": 100,
+                    "item_ids": [2, 3]
                 }
             }
         }
@@ -1622,10 +1566,17 @@
   - **示例**: `/events/1`
 - **方法**: `POST`
 - **Headers**: `Content-Type: application/json`
+- **Body**:
+
+  ```json
+  {
+      "character_id": 1
+  }
+  ```
 
 - **成功响应**:
   - **对于战斗事件**:
-  
+
     ```json
     {
         "battle": {
@@ -1637,23 +1588,21 @@
                 "attack": 20,
                 "defense": 10,
                 "skills": {
-                    "skill1": "猛攻",
-                    "skill2": "防御"
+                    "skills": ["猛攻", "防御"]
                 }
             },
             "battle_data": {
-                "enemy_skills": ["猛攻", "防御"],
-                "loot": {
-                    "experience": 100,
-                    "item_id": 2
-                }
+                "player_health": 100,
+                "enemy_health": 150,
+                "turn": "player",
+                "turn_count": 1
             }
         }
     }
     ```
 
   - **对于剧情和环境事件**:
-  
+
     ```json
     {
         "outcome": {
@@ -1674,15 +1623,13 @@
     }
     ```
 
+  - **状态码**: `400 Bad Request`
+  - **内容**:
 
-### 已实现功能
+    ```json
+    {
+        "message": "缺少 character_id 参数来接收奖励"
+    }
+    ```
 
-1. **用户管理**：注册和登录。
-2. **角色管理**：创建、获取、更新和删除角色。
-3. **技能管理**：获取职业技能列表、学习技能、升级技能、获取角色技能列表。
-4. **地图管理**：获取地图列表和详情。
-5. **任务系统**：创建任务、获取任务详情、分配任务、获取角色任务列表、更新任务状态。
-6. **背包管理**：添加物品到背包、移除物品、使用物品、获取背包内容、装备/卸下物品。
-7. **物品管理**：获取所有物品、获取物品详情、创建物品、更新物品信息、删除物品。
-8. **战斗管理**：获取战斗详情、执行战斗动作、获取战斗状态效果。
-9. **事件管理**：获取事件详情、触发事件。
+---

@@ -20,12 +20,15 @@ def get_maps():
 
     maps_data = []
     for m in maps:
+        # 获取相邻地图
+        adjacent = [{'id': adj.id, 'name': adj.name} for adj in m.neighbors]
         maps_data.append({
             'id': m.id,
             'name': m.name,
             'description': m.description,
             'level_required': m.level_required,
-            'parent_map': m.parent_map
+            'parent_map': m.parent_map,
+            'adjacent_maps': adjacent
         })
 
     return jsonify({'maps': maps_data}), 200
@@ -37,12 +40,15 @@ def get_map(map_id):
     if not m:
         return jsonify({'message': '地图不存在'}), 404
 
+    adjacent = [{'id': adj.id, 'name': adj.name} for adj in m.neighbors]
+
     map_data = {
         'id': m.id,
         'name': m.name,
         'description': m.description,
         'level_required': m.level_required,
-        'parent_map': m.parent_map
+        'parent_map': m.parent_map,
+        'adjacent_maps': adjacent
     }
 
     return jsonify({'map': map_data}), 200

@@ -1,19 +1,20 @@
-# backend/app/routes/auth.py
+# backend/app/routes/modules.py
 
 from flask import Blueprint, request, jsonify
 from ..models import db, User
+from werkzeug.security import generate_password_hash, check_password_hash
 
-auth_bp = Blueprint('auth', __name__)
+auth_bp = Blueprint('modules', __name__)
 
 
 @auth_bp.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
     username = data.get('username')
-    password = data.get('password')  # 注意：生产环境请使用哈希加密
+    password = data.get('password')
     email = data.get('email')
 
-    if not username or not password or not email:
+    if not all([username, password, email]):
         return jsonify({'message': '缺少必要参数'}), 400
 
     if User.query.filter_by(username=username).first():
@@ -22,7 +23,11 @@ def register():
     if User.query.filter_by(email=email).first():
         return jsonify({'message': '电子邮件已存在'}), 400
 
-    new_user = User(username=username, password=password, email=email)
+    new_user = User(
+        username=username,
+        password=password,
+        email=email
+    )
     db.session.add(new_user)
     db.session.commit()
 
@@ -35,21 +40,19 @@ def login():
     username = data.get('username')
     password = data.get('password')
 
-    if not username or not password:
+    if not all([username, password]):
         return jsonify({'message': '缺少必要参数'}), 400
 
-    user = User.query.filter_by(username=username, password=password).first()
-
-    if not user:
+    user = User.query.filter_by(username=username).first()
+    if not user or not password:
         return jsonify({'message': '用户名或密码错误'}), 401
 
-    # 简单返回用户信息，生产环境请使用认证令牌
-    return jsonify({
-        'message': '登录成功',
-        'user': {
-            'id': user.id,
-            'username': user.username,
-            'email': user.email,
-            'created_at': user.created_at
-        }
-    }), 200
+    # 这里可以生成并返回JWT令牌，简化起见暂不实现
+    user_data = {
+        'id': user.id,
+        'username': user.username,
+        'email': user.email,
+        'created_at': user.created_at.isoformat()
+    }
+
+    return jsonify({'message': 'success', 'user': user_data}), 200

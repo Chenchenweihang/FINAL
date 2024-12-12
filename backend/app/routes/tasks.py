@@ -6,34 +6,6 @@ from ..models import db, Task, Character, CharacterTask
 tasks_bp = Blueprint('tasks', __name__)
 
 
-@tasks_bp.route('/', methods=['POST'])
-def create_task():
-    data = request.get_json()
-    name = data.get('name')
-    description = data.get('description')
-    task_type = data.get('task_type')
-    requirements = data.get('requirements')
-    rewards = data.get('rewards')
-
-    if not all([name, description, task_type, requirements, rewards]):
-        return jsonify({'message': '缺少必要参数'}), 400
-
-    if task_type not in ['主线', '支线']:
-        return jsonify({'message': '无效的任务类型'}), 400
-
-    new_task = Task(
-        name=name,
-        description=description,
-        task_type=task_type,
-        requirements=requirements,
-        rewards=rewards
-    )
-    db.session.add(new_task)
-    db.session.commit()
-
-    return jsonify({'message': '任务创建成功', 'task_id': new_task.id}), 201
-
-
 @tasks_bp.route('/<int:task_id>', methods=['GET'])
 def get_task(task_id):
     task = Task.query.get(task_id)
@@ -47,43 +19,10 @@ def get_task(task_id):
         'task_type': task.task_type,
         'requirements': task.requirements,
         'rewards': task.rewards,
-        'created_at': task.created_at
+        'created_at': task.created_at.isoformat()
     }
 
     return jsonify({'task': task_data}), 200
-
-
-@tasks_bp.route('/assign', methods=['POST'])
-def assign_task():
-    data = request.get_json()
-    character_id = data.get('character_id')
-    task_id = data.get('task_id')
-
-    if not all([character_id, task_id]):
-        return jsonify({'message': '缺少必要参数'}), 400
-
-    character = Character.query.get(character_id)
-    task = Task.query.get(task_id)
-
-    if not character:
-        return jsonify({'message': '角色不存在'}), 404
-    if not task:
-        return jsonify({'message': '任务不存在'}), 404
-
-    existing = CharacterTask.query.filter_by(character_id=character_id, task_id=task_id).first()
-    if existing:
-        return jsonify({'message': '任务已分配给该角色'}), 400
-
-    character_task = CharacterTask(
-        character_id=character_id,
-        task_id=task_id,
-        status='未开始',
-        progress={}
-    )
-    db.session.add(character_task)
-    db.session.commit()
-
-    return jsonify({'message': '任务已分配', 'character_task_id': character_task.id}), 201
 
 
 @tasks_bp.route('/character/<int:character_id>', methods=['GET'])
