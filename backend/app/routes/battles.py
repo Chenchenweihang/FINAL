@@ -1,11 +1,59 @@
 # backend/app/routes/battles.py
 
 from flask import Blueprint, request, jsonify
-from ..models import db, Battle, Enemy, Character, StatusEffect, Skill, CharacterSkill, Item, CharacterItem
+from ..models import db, Battle, Enemy, Character, StatusEffect, Skill, CharacterSkill, Item, CharacterItem, Event
 from sqlalchemy.exc import IntegrityError
 import random
 
 battles_bp = Blueprint('battles', __name__)
+
+
+@battles_bp.route('/start', methods=['POST'])
+def start_battle():
+    data = request.get_json()
+    character_id = data.get('character_id')
+    event_id = data.get('event_id')
+
+    character = Character.query.get(character_id)
+    if not character:
+        return jsonify({'message': '角色不存在'}), 404
+
+    event = Event.query.get(event_id)
+    if not event:
+        return jsonify({'message': '事件不存在'}), 404
+
+    # 根据事件配置选择或生成敌人
+    enemy = Enemy.query.get(event.conditions.get('enemy_id'))
+    if not enemy:
+        return jsonify({'message': '敌人不存在'}), 404
+
+    # 创建新的战斗记录
+    battle = Battle(
+        event_id=event_id,
+        enemy_id=enemy.id,
+        character_id=character_id,
+        battle_data={
+            'player_health': character.health,
+            'enemy_health': enemy.health,
+            'player_mana': character.mana,
+            'turn': 'player',
+            'turn_count': 1,
+            'action_taken': False,
+            'skill_cooldowns': {},
+            'status_effects': [],
+            'combat_log': ['战斗开始！']
+        }
+    )
+
+    db.session.add(battle)
+    db.session.commit()
+
+    return jsonify({
+        'battle_id': battle.id,
+        'message': '战斗开始',
+        'battle_data': battle.battle_data
+    }), 201
+
 
 @battles_bp.route('/<int:battle_id>', methods=['GET'])
 def get_battle(battle_id):

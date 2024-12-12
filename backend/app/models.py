@@ -128,11 +128,22 @@ class Battle(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     event_id = db.Column(db.Integer, db.ForeignKey('Events.id'), nullable=False)
     enemy_id = db.Column(db.Integer, db.ForeignKey('Enemies.id'), nullable=False)
-    battle_data = db.Column(db.JSON, nullable=False, default={})
-    current_turn = db.Column(db.String(20), nullable=False, default='character')  # 'character' 或 'enemy'
-    is_active = db.Column(db.Boolean, default=True, nullable=False)
+    character_id = db.Column(db.Integer, db.ForeignKey('Characters.id'), nullable=False)  # 新增
+    battle_data = db.Column(db.JSON, nullable=False, default={
+        'player_health': 0,
+        'enemy_health': 0,
+        'player_mana': 0,
+        'turn': 'player',
+        'turn_count': 1,
+        'action_taken': False,
+        'skill_cooldowns': {},
+        'status_effects': [],
+        'combat_log': []
+    })
+    is_active = db.Column(db.Boolean, default=True)
     result = db.Column(db.Enum('victory', 'defeat', 'escape'), nullable=True)
-    status_effects = db.relationship('StatusEffect', backref='battle', lazy=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
 class StatusEffect(db.Model):
